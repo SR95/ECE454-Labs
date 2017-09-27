@@ -1,0 +1,303 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+ no time accumulated
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+  0.00      0.00     0.00       63     0.00     0.00  copyFrame
+  0.00      0.00     0.00       53     0.00     0.00  allocateFrame
+  0.00      0.00     0.00       51     0.00     0.00  deallocateFrame
+  0.00      0.00     0.00       10     0.00     0.00  processMoveDownReference
+  0.00      0.00     0.00       10     0.00     0.00  processMoveLeftReference
+  0.00      0.00     0.00       10     0.00     0.00  processMoveRightReference
+  0.00      0.00     0.00       10     0.00     0.00  processMoveUpReference
+  0.00      0.00     0.00        5     0.00     0.00  processMirrorX
+  0.00      0.00     0.00        5     0.00     0.00  processMirrorXReference
+  0.00      0.00     0.00        5     0.00     0.00  processMirrorY
+  0.00      0.00     0.00        5     0.00     0.00  processMirrorYReference
+  0.00      0.00     0.00        5     0.00     0.00  processMoveDown
+  0.00      0.00     0.00        5     0.00     0.00  processMoveLeft
+  0.00      0.00     0.00        5     0.00     0.00  processMoveRight
+  0.00      0.00     0.00        5     0.00     0.00  processMoveUp
+  0.00      0.00     0.00        1     0.00     0.00  implementation_driver
+  0.00      0.00     0.00        1     0.00     0.00  implementation_driver_reference
+  0.00      0.00     0.00        1     0.00     0.00  loadbmp_decode_file
+  0.00      0.00     0.00        1     0.00     0.00  print_team_info
+  0.00      0.00     0.00        1     0.00     0.00  recordFrame
+  0.00      0.00     0.00        1     0.00     0.00  verifiedAllFrames
+  0.00      0.00     0.00        1     0.00     0.00  verifyFrame
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 2 byte(s) no time propagated
+
+index % time    self  children    called     name
+                0.00    0.00       1/63          recordFrame [20]
+                0.00    0.00       2/63          main [41]
+                0.00    0.00       5/63          processMirrorXReference [9]
+                0.00    0.00       5/63          processMirrorYReference [11]
+                0.00    0.00       5/63          processMirrorX [8]
+                0.00    0.00       5/63          processMirrorY [10]
+                0.00    0.00      10/63          processMoveUpReference [7]
+                0.00    0.00      10/63          processMoveLeftReference [5]
+                0.00    0.00      10/63          processMoveDownReference [4]
+                0.00    0.00      10/63          processMoveRightReference [6]
+[1]      0.0    0.00    0.00      63         copyFrame [1]
+-----------------------------------------------
+                0.00    0.00       1/53          main [41]
+                0.00    0.00       1/53          recordFrame [20]
+                0.00    0.00       1/53          implementation_driver [16]
+                0.00    0.00       5/53          processMirrorXReference [9]
+                0.00    0.00       5/53          processMirrorYReference [11]
+                0.00    0.00      10/53          processMoveUpReference [7]
+                0.00    0.00      10/53          processMoveLeftReference [5]
+                0.00    0.00      10/53          processMoveDownReference [4]
+                0.00    0.00      10/53          processMoveRightReference [6]
+[2]      0.0    0.00    0.00      53         allocateFrame [2]
+-----------------------------------------------
+                0.00    0.00       1/51          implementation_driver [16]
+                0.00    0.00       5/51          processMirrorXReference [9]
+                0.00    0.00       5/51          processMirrorYReference [11]
+                0.00    0.00      10/51          processMoveUpReference [7]
+                0.00    0.00      10/51          processMoveLeftReference [5]
+                0.00    0.00      10/51          processMoveDownReference [4]
+                0.00    0.00      10/51          processMoveRightReference [6]
+[3]      0.0    0.00    0.00      51         deallocateFrame [3]
+-----------------------------------------------
+                0.00    0.00       5/10          implementation_driver_reference [17]
+                0.00    0.00       5/10          processMoveDown [12]
+[4]      0.0    0.00    0.00      10         processMoveDownReference [4]
+                0.00    0.00      10/53          allocateFrame [2]
+                0.00    0.00      10/63          copyFrame [1]
+                0.00    0.00      10/51          deallocateFrame [3]
+-----------------------------------------------
+                0.00    0.00       5/10          implementation_driver_reference [17]
+                0.00    0.00       5/10          processMoveLeft [13]
+[5]      0.0    0.00    0.00      10         processMoveLeftReference [5]
+                0.00    0.00      10/53          allocateFrame [2]
+                0.00    0.00      10/63          copyFrame [1]
+                0.00    0.00      10/51          deallocateFrame [3]
+-----------------------------------------------
+                0.00    0.00       5/10          implementation_driver_reference [17]
+                0.00    0.00       5/10          processMoveRight [14]
+[6]      0.0    0.00    0.00      10         processMoveRightReference [6]
+                0.00    0.00      10/53          allocateFrame [2]
+                0.00    0.00      10/63          copyFrame [1]
+                0.00    0.00      10/51          deallocateFrame [3]
+-----------------------------------------------
+                0.00    0.00       5/10          implementation_driver_reference [17]
+                0.00    0.00       5/10          processMoveUp [15]
+[7]      0.0    0.00    0.00      10         processMoveUpReference [7]
+                0.00    0.00      10/53          allocateFrame [2]
+                0.00    0.00      10/63          copyFrame [1]
+                0.00    0.00      10/51          deallocateFrame [3]
+-----------------------------------------------
+                0.00    0.00       5/5           implementation_driver [16]
+[8]      0.0    0.00    0.00       5         processMirrorX [8]
+                0.00    0.00       5/63          copyFrame [1]
+-----------------------------------------------
+                0.00    0.00       5/5           implementation_driver_reference [17]
+[9]      0.0    0.00    0.00       5         processMirrorXReference [9]
+                0.00    0.00       5/53          allocateFrame [2]
+                0.00    0.00       5/63          copyFrame [1]
+                0.00    0.00       5/51          deallocateFrame [3]
+-----------------------------------------------
+                0.00    0.00       5/5           implementation_driver [16]
+[10]     0.0    0.00    0.00       5         processMirrorY [10]
+                0.00    0.00       5/63          copyFrame [1]
+-----------------------------------------------
+                0.00    0.00       5/5           implementation_driver_reference [17]
+[11]     0.0    0.00    0.00       5         processMirrorYReference [11]
+                0.00    0.00       5/53          allocateFrame [2]
+                0.00    0.00       5/63          copyFrame [1]
+                0.00    0.00       5/51          deallocateFrame [3]
+-----------------------------------------------
+                0.00    0.00       5/5           implementation_driver [16]
+[12]     0.0    0.00    0.00       5         processMoveDown [12]
+                0.00    0.00       5/10          processMoveDownReference [4]
+-----------------------------------------------
+                0.00    0.00       5/5           implementation_driver [16]
+[13]     0.0    0.00    0.00       5         processMoveLeft [13]
+                0.00    0.00       5/10          processMoveLeftReference [5]
+-----------------------------------------------
+                0.00    0.00       5/5           implementation_driver [16]
+[14]     0.0    0.00    0.00       5         processMoveRight [14]
+                0.00    0.00       5/10          processMoveRightReference [6]
+-----------------------------------------------
+                0.00    0.00       5/5           implementation_driver [16]
+[15]     0.0    0.00    0.00       5         processMoveUp [15]
+                0.00    0.00       5/10          processMoveUpReference [7]
+-----------------------------------------------
+                0.00    0.00       1/1           main [41]
+[16]     0.0    0.00    0.00       1         implementation_driver [16]
+                0.00    0.00       5/5           processMoveUp [15]
+                0.00    0.00       5/5           processMoveLeft [13]
+                0.00    0.00       5/5           processMoveDown [12]
+                0.00    0.00       5/5           processMoveRight [14]
+                0.00    0.00       5/5           processMirrorX [8]
+                0.00    0.00       5/5           processMirrorY [10]
+                0.00    0.00       1/53          allocateFrame [2]
+                0.00    0.00       1/1           verifyFrame [22]
+                0.00    0.00       1/51          deallocateFrame [3]
+-----------------------------------------------
+                0.00    0.00       1/1           main [41]
+[17]     0.0    0.00    0.00       1         implementation_driver_reference [17]
+                0.00    0.00       5/10          processMoveRightReference [6]
+                0.00    0.00       5/10          processMoveLeftReference [5]
+                0.00    0.00       5/10          processMoveUpReference [7]
+                0.00    0.00       5/10          processMoveDownReference [4]
+                0.00    0.00       5/5           processMirrorXReference [9]
+                0.00    0.00       5/5           processMirrorYReference [11]
+                0.00    0.00       1/1           recordFrame [20]
+-----------------------------------------------
+                0.00    0.00       1/1           main [41]
+[18]     0.0    0.00    0.00       1         loadbmp_decode_file [18]
+-----------------------------------------------
+                0.00    0.00       1/1           main [41]
+[19]     0.0    0.00    0.00       1         print_team_info [19]
+-----------------------------------------------
+                0.00    0.00       1/1           implementation_driver_reference [17]
+[20]     0.0    0.00    0.00       1         recordFrame [20]
+                0.00    0.00       1/53          allocateFrame [2]
+                0.00    0.00       1/63          copyFrame [1]
+-----------------------------------------------
+                0.00    0.00       1/1           main [41]
+[21]     0.0    0.00    0.00       1         verifiedAllFrames [21]
+-----------------------------------------------
+                0.00    0.00       1/1           implementation_driver [16]
+[22]     0.0    0.00    0.00       1         verifyFrame [22]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+   [2] allocateFrame           [9] processMirrorXReference [6] processMoveRightReference
+   [1] copyFrame              [10] processMirrorY         [15] processMoveUp
+   [3] deallocateFrame        [11] processMirrorYReference [7] processMoveUpReference
+  [16] implementation_driver  [12] processMoveDown        [20] recordFrame
+  [17] implementation_driver_reference [4] processMoveDownReference [21] verifiedAllFrames
+  [18] loadbmp_decode_file    [13] processMoveLeft        [22] verifyFrame
+  [19] print_team_info         [5] processMoveLeftReference
+   [8] processMirrorX         [14] processMoveRight
