@@ -50,9 +50,9 @@ unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsign
         for (int column = 0; column < width; column++) {
             int position_rendered_frame = row * width * 3 + column * 3;
             int position_buffer_frame = (row + offset) * width * 3 + column * 3;
-            rendered_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
-            rendered_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
-            rendered_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
+            buffer_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
+            buffer_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
+            buffer_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
         }
     }
 
@@ -60,14 +60,14 @@ unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsign
     for (int row = (height - offset); row < height; row++) {
         for (int column = 0; column < width; column++) {
             int position_rendered_frame = row * width * 3 + column * 3;
-            rendered_frame[position_rendered_frame] = 255;
-            rendered_frame[position_rendered_frame + 1] = 255;
-            rendered_frame[position_rendered_frame + 2] = 255;
+            buffer_frame[position_rendered_frame] = 255;
+            buffer_frame[position_rendered_frame + 1] = 255;
+            buffer_frame[position_rendered_frame + 2] = 255;
         }
     }
 
     // copy the temporary buffer back to original frame buffer
-    buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
+    //buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
     // return a pointer to the updated image buffer
     return buffer_frame;
@@ -92,12 +92,12 @@ unsigned char *processMoveRight(unsigned char *buffer_frame, unsigned width, uns
 
     // store shifted pixels to temporary buffer
     for (int row = 0; row < height; row++) {
-        for (int column = offset; column < width; column++) {
+        for (int column = width - 1; column >= offset; column--) {
             int position_rendered_frame = row * width * 3 + column * 3;
             int position_buffer_frame = row * width * 3 + (column - offset) * 3;
-            rendered_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
-            rendered_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
-            rendered_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
+            buffer_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
+            buffer_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
+            buffer_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
         }
     }
 
@@ -105,14 +105,14 @@ unsigned char *processMoveRight(unsigned char *buffer_frame, unsigned width, uns
     for (int row = 0; row < height; row++) {
         for (int column = 0; column < offset; column++) {
             int position_rendered_frame = row * width * 3 + column * 3;
-            rendered_frame[position_rendered_frame] = 255;
-            rendered_frame[position_rendered_frame + 1] = 255;
-            rendered_frame[position_rendered_frame + 2] = 255;
+            buffer_frame[position_rendered_frame] = 255;
+            buffer_frame[position_rendered_frame + 1] = 255;
+            buffer_frame[position_rendered_frame + 2] = 255;
         }
     }
 
     // copy the temporary buffer back to original frame buffer
-    buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
+    //buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
     // return a pointer to the updated image buffer
     return buffer_frame;
@@ -136,13 +136,13 @@ unsigned char *processMoveDown(unsigned char *buffer_frame, unsigned width, unsi
     }
 
     // store shifted pixels to temporary buffer
-    for (int row = offset; row < height; row++) {
+    for (int row = height - 1; row >= offset; row--) {
         for (int column = 0; column < width; column++) {
             int position_rendered_frame = row * width * 3 + column * 3;
             int position_buffer_frame = (row - offset) * width * 3 + column * 3;
-            rendered_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
-            rendered_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
-            rendered_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
+            buffer_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
+            buffer_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
+            buffer_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
         }
     }
 
@@ -150,14 +150,14 @@ unsigned char *processMoveDown(unsigned char *buffer_frame, unsigned width, unsi
     for (int row = 0; row < offset; row++) {
         for (int column = 0; column < width; column++) {
             int position_rendered_frame = row * width * 3 + column * 3;
-            rendered_frame[position_rendered_frame] = 255;
-            rendered_frame[position_rendered_frame + 1] = 255;
-            rendered_frame[position_rendered_frame + 2] = 255;
+            buffer_frame[position_rendered_frame] = 255;
+            buffer_frame[position_rendered_frame + 1] = 255;
+            buffer_frame[position_rendered_frame + 2] = 255;
         }
     }
 
     // copy the temporary buffer back to original frame buffer
-    buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
+    //buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
     // return a pointer to the updated image buffer
     return buffer_frame;
@@ -185,9 +185,9 @@ unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsi
         for (int column = 0; column < (width - offset); column++) {
             int position_rendered_frame = row * width * 3 + column * 3;
             int position_buffer_frame = row * width * 3 + (column + offset) * 3;
-            rendered_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
-            rendered_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
-            rendered_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
+            buffer_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
+            buffer_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
+            buffer_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
         }
     }
 
@@ -195,14 +195,14 @@ unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsi
     for (int row = 0; row < height; row++) {
         for (int column = width - offset; column < width; column++) {
             int position_rendered_frame = row * width * 3 + column * 3;
-            rendered_frame[position_rendered_frame] = 255;
-            rendered_frame[position_rendered_frame + 1] = 255;
-            rendered_frame[position_rendered_frame + 2] = 255;
+            buffer_frame[position_rendered_frame] = 255;
+            buffer_frame[position_rendered_frame + 1] = 255;
+            buffer_frame[position_rendered_frame + 2] = 255;
         }
     }
 
     // copy the temporary buffer back to original frame buffer
-    buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
+    //buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
     // return a pointer to the updated image buffer
     return buffer_frame;
@@ -947,3 +947,17 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 
 	return;
 }
+
+//Trying out something with CCW
+/*
+for (int row = 0; row < height/2; row++) {
+        for (int column = row; column < width - row - 1; column++) 
+             {
+                int temp = buffer_frame[row * width * 3 + column * 3];
+                buffer_frame[row * width * 3 + column * 3] = buffer_frame[(column * width * 3) + (width - 1 - row)];
+buffer_frame[(column * width * 3) + (width - 1 - row)] = buffer_frame[((height - 1 - row) * width * 3) + (width - 1 - column)];
+buffer_frame[((height - 1 - row) * width * 3) + (width - 1 - column)] = buffer_frame[((width - 1 - column) * width * 3) +(row)];
+		buffer_frame[((width - 1 - column) * width * 3) + (row)] = temp;
+            }
+
+        }*/
