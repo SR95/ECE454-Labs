@@ -45,6 +45,19 @@ unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsign
         return processMoveDown(buffer_frame, width, height, offset * -1);
     }
 
+
+    /****************** MEMCPY VERSION ********************/
+    unsigned char *sourcePtr, *destPtr, *tempPtr;
+    // store shifted pixels to temporary buffer
+    //printf("buffer address: %p, %p\n", buffer_frame, tempPtr);
+    for (int row = 0; row < (height - offset); row++)
+    {
+	    destPtr = buffer_frame + (row*width*3);
+  	    sourcePtr = destPtr + (offset*width*3);
+  	    memcpy(destPtr, sourcePtr, width*3);
+    }
+
+    /************** DOUBLE FOR LOOP VERSION ************************
     // store shifted pixels to temporary buffer
     for (int row = 0; row < (height - offset); row++) {
         for (int column = 0; column < width; column++) {
@@ -55,6 +68,7 @@ unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsign
             buffer_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
         }
     }
+    /**********************************************************/
 
     // fill left over pixels with white pixels
     for (int row = (height - offset); row < height; row++) {
@@ -135,7 +149,18 @@ unsigned char *processMoveDown(unsigned char *buffer_frame, unsigned width, unsi
         return processMoveUp(buffer_frame, width, height, offset * -1);
     }
 
-    // store shifted pixels to temporary buffer
+    unsigned char *sourcePtr, *destPtr, *tempPtr;
+    
+    for (int row = height - 1; row >= offset; row--) {
+
+	    sourcePtr = buffer_frame + ((row - offset) * width * 3);
+	    destPtr = buffer_frame + (row * width * 3);
+	    memcpy(destPtr,sourcePtr, width*3);
+    }
+    
+ 
+    /***************************************************** 
+    // Older version: store shifted pixels to temporary buffer
     for (int row = height - 1; row >= offset; row--) {
         for (int column = 0; column < width; column++) {
             int position_rendered_frame = row * width * 3 + column * 3;
@@ -145,6 +170,7 @@ unsigned char *processMoveDown(unsigned char *buffer_frame, unsigned width, unsi
             buffer_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
         }
     }
+    /*****************************************************/
 
     // fill left over pixels with white pixels
     for (int row = 0; row < offset; row++) {
@@ -180,7 +206,19 @@ unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsi
         return processMoveRight(buffer_frame, width, height, offset * -1);
     }
 
-    // store shifted pixels to temporary buffer
+    /* Implementing memcpy version, currently not working
+    unsigned char *sourcePtr, *destPtr, *tempPtr;
+
+    for (int row = 0; row < height; row++) {
+
+  	    sourcePtr = buffer_frame + (row * width * 3);
+	    destPtr = buffer_frame + (row * width * 3) + offset;
+            memcpy(destPtr,sourcePtr,((width - offset) * 3));
+       
+    }*/
+
+
+    // Original: store shifted pixels to temporary buffer
     for (int row = 0; row < height; row++) {
         for (int column = 0; column < (width - offset); column++) {
             int position_rendered_frame = row * width * 3 + column * 3;
@@ -871,7 +909,7 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 
 		}
 
-		if (processed_frames % 25 == 0) {
+		if (processed_frames % 1 == 0) {
 			//printCheck();
 			//Perform translation if any
 			if (netModifications[vertical].key != NULL) {
