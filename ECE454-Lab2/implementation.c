@@ -5,11 +5,29 @@
 #include "implementation_reference.h"   // DO NOT REMOVE this line
 #include "implementation.h"
 
-struct kv netModifications[3];
+struct kv netModifications[5];
 
 #define vertical 0
 #define horizontal 1
 #define rotation 2
+#define mirrorx 3
+#define mirrory 4
+
+#define translation 5
+#define mirror 6
+#define nooperation 7
+
+unsigned char* rendered_frame;
+
+// Declariations
+unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsigned height, int offset);
+unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsigned height, int offset);
+unsigned char *processMoveDown(unsigned char *buffer_frame, unsigned width, unsigned height, int offset);
+unsigned char *processMoveRight(unsigned char *buffer_frame, unsigned width, unsigned height, int offset);
+unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsigned height,
+                                        int rotate_iteration);
+unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, unsigned height,
+                                        int rotate_iteration);
 
 /***********************************************************************************************************************
  * @param buffer_frame - pointer pointing to a buffer storing the imported 24-bit bitmap image
@@ -22,8 +40,10 @@ struct kv netModifications[3];
  **********************************************************************************************************************/
 unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsigned height, int offset) {
 
-    // allocate memory for temporary image buffer
-    unsigned char *rendered_frame = allocateFrame(width, height);
+    // handle negative offsets
+    if (offset < 0){
+        return processMoveDown(buffer_frame, width, height, offset * -1);
+    }
 
     // store shifted pixels to temporary buffer
     for (int row = 0; row < (height - offset); row++) {
@@ -49,9 +69,6 @@ unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsign
     // copy the temporary buffer back to original frame buffer
     buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
-    // free temporary image buffer
-    deallocateFrame(rendered_frame);
-
     // return a pointer to the updated image buffer
     return buffer_frame;
 
@@ -67,9 +84,11 @@ unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsign
  * Note2: You can assume the object will never be moved off the screen
  **********************************************************************************************************************/
 unsigned char *processMoveRight(unsigned char *buffer_frame, unsigned width, unsigned height, int offset) {
-    
-    // allocate memory for temporary image buffer
-    unsigned char *rendered_frame = allocateFrame(width, height);
+     
+    // handle negative offsets
+    if (offset < 0){
+        return processMoveLeft(buffer_frame, width, height, offset * -1);
+    }
 
     // store shifted pixels to temporary buffer
     for (int row = 0; row < height; row++) {
@@ -95,9 +114,6 @@ unsigned char *processMoveRight(unsigned char *buffer_frame, unsigned width, uns
     // copy the temporary buffer back to original frame buffer
     buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
-    // free temporary image buffer
-    deallocateFrame(rendered_frame);
-
     // return a pointer to the updated image buffer
     return buffer_frame;
 
@@ -114,8 +130,10 @@ unsigned char *processMoveRight(unsigned char *buffer_frame, unsigned width, uns
  **********************************************************************************************************************/
 unsigned char *processMoveDown(unsigned char *buffer_frame, unsigned width, unsigned height, int offset) {
 
-    // allocate memory for temporary image buffer
-    unsigned char *rendered_frame = allocateFrame(width, height);
+    // handle negative offsets
+    if (offset < 0){
+        return processMoveUp(buffer_frame, width, height, offset * -1);
+    }
 
     // store shifted pixels to temporary buffer
     for (int row = offset; row < height; row++) {
@@ -141,9 +159,6 @@ unsigned char *processMoveDown(unsigned char *buffer_frame, unsigned width, unsi
     // copy the temporary buffer back to original frame buffer
     buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
-    // free temporary image buffer
-    deallocateFrame(rendered_frame);
-
     // return a pointer to the updated image buffer
     return buffer_frame;
 
@@ -160,8 +175,10 @@ unsigned char *processMoveDown(unsigned char *buffer_frame, unsigned width, unsi
  **********************************************************************************************************************/
 unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsigned height, int offset) {
 
-    // allocate memory for temporary image buffer
-    unsigned char *rendered_frame = allocateFrame(width, height);
+    // handle negative offsets
+    if (offset < 0){
+        return processMoveRight(buffer_frame, width, height, offset * -1);
+    }
 
     // store shifted pixels to temporary buffer
     for (int row = 0; row < height; row++) {
@@ -187,9 +204,6 @@ unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsi
     // copy the temporary buffer back to original frame buffer
     buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
-    // free temporary image buffer
-    deallocateFrame(rendered_frame);
-
     // return a pointer to the updated image buffer
     return buffer_frame;
 
@@ -205,6 +219,11 @@ unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsi
  **********************************************************************************************************************/
 unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsigned height, int rotate_iteration) {
 
+    // handle negative offsets
+    if (rotate_iteration < 0){
+        return processRotateCCW(buffer_frame, width, height, rotate_iteration * -1);
+    }
+
     //Check for 360 degree or multiple
     if (rotate_iteration % 4 == 0) {
     	return buffer_frame;
@@ -219,9 +238,6 @@ unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsi
 
     //Check for 180 degree or multiple
     if ((rotate_iteration - 2) % 4 == 0) {
-
-	// allocate memory for temporary image buffer
-    	unsigned char *rendered_frame = allocateFrame(width, height);
 
         int render_column = width - 1;
         int render_row = height - 1;
@@ -241,15 +257,9 @@ unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsi
         // copy the temporary buffer back to original frame buffer
         buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
-	// free temporary image buffer
-    	deallocateFrame(rendered_frame);
-
     	// return a pointer to the updated image buffer
     	return buffer_frame;
     }
-
-    // allocate memory for temporary image buffer
-    unsigned char *rendered_frame = allocateFrame(width, height);
 
     // store shifted pixels to temporary buffer
     for (int iteration = 0; iteration < rotate_iteration; iteration++) {
@@ -272,9 +282,6 @@ unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsi
         buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
     }
 
-    // free temporary image buffer
-    deallocateFrame(rendered_frame);
-
     // return a pointer to the updated image buffer
     return buffer_frame;
 }
@@ -288,6 +295,12 @@ unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsi
  * Note: You can assume the frame will always be square and you will be rotating the entire image
  **********************************************************************************************************************/
 unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, unsigned height, int rotate_iteration) {
+
+    if (rotate_iteration < 0){
+        // handle negative offsets
+        // rotating 90 degrees counter clockwise in opposite direction is equal to 90 degrees in cw direction
+        return processRotateCW(buffer_frame, width, height, rotate_iteration * -1);
+    } 
 
     //Check for 360 degree rotation
     if (rotate_iteration % 4 == 0) {
@@ -303,9 +316,6 @@ unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, uns
 
     //Check for 180 degree rotation, if so do the same as CW 180 degrees
     if ((rotate_iteration - 2) % 4 == 0) {
-
-	// allocate memory for temporary image buffer
-    	unsigned char *rendered_frame = allocateFrame(width, height);
 
         int render_column = width - 1;
         int render_row = height - 1;
@@ -325,15 +335,9 @@ unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, uns
         // copy the temporary buffer back to original frame buffer
         buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
-	// free temporary image buffer
-    	deallocateFrame(rendered_frame);
-
     	// return a pointer to the updated image buffer
     	return buffer_frame;
     }
-
-    // allocate memory for temporary image buffer
-    unsigned char *rendered_frame = allocateFrame(width, height);
 
     // store shifted pixels to temporary buffer
     for (int iteration = 0; iteration < rotate_iteration; iteration++) {
@@ -356,9 +360,6 @@ unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, uns
         buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
     }
 
-    // free temporary image buffer
-    deallocateFrame(rendered_frame);
-
     // return a pointer to the updated image buffer
     return buffer_frame;
 }
@@ -371,9 +372,6 @@ unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, uns
  * @return
  **********************************************************************************************************************/
 unsigned char *processMirrorX(unsigned char *buffer_frame, unsigned int width, unsigned int height, int _unused) {
-
-    // allocate memory for temporary image buffer
-    unsigned char *rendered_frame = allocateFrame(width, height);
 
     // store shifted pixels to temporary buffer
     for (int row = 0; row < height; row++) {
@@ -389,9 +387,6 @@ unsigned char *processMirrorX(unsigned char *buffer_frame, unsigned int width, u
     // copy the temporary buffer back to original frame buffer
     buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
 
-    // free temporary image buffer
-    deallocateFrame(rendered_frame);
-
     // return a pointer to the updated image buffer
     return buffer_frame;
 
@@ -406,9 +401,6 @@ unsigned char *processMirrorX(unsigned char *buffer_frame, unsigned int width, u
  **********************************************************************************************************************/
 unsigned char *processMirrorY(unsigned char *buffer_frame, unsigned width, unsigned height, int _unused) {
 
-    // allocate memory for temporary image buffer
-    unsigned char *rendered_frame = allocateFrame(width, height);
-
     // store shifted pixels to temporary buffer
     for (int row = 0; row < height; row++) {
         for (int column = 0; column < width; column++) {
@@ -422,9 +414,6 @@ unsigned char *processMirrorY(unsigned char *buffer_frame, unsigned width, unsig
 
     // copy the temporary buffer back to original frame buffer
     buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
-
-    // free temporary image buffer
-    deallocateFrame(rendered_frame);
 
     // return a pointer to the updated image buffer
     return buffer_frame;
@@ -474,7 +463,7 @@ void print_team_info(){
  ***********************************************************************************************************************
  *
  **********************************************************************************************************************/
-void implementation_driver(struct kv *sensor_values, int sensor_values_count, unsigned char *frame_buffer,
+/*void implementation_driver(struct kv *sensor_values, int sensor_values_count, unsigned char *frame_buffer,
                            unsigned int width, unsigned int height, bool grading_mode) {
     int processed_frames = 0;
     
@@ -522,20 +511,60 @@ void implementation_driver(struct kv *sensor_values, int sensor_values_count, un
     }
 
     return;
-}
+}*/
 
-/*void updateNetModification(struct kv* netModification, struct kv* currentObject) {
+void updateNetModification(struct kv* netModification, struct kv* currentObject) {
 	
 	if (netModification->key == NULL) {
-		netModification->key = currentObject->key;
-		netModification->value = currentObject->value;
+
+		if (currentObject-> value > 0) {
+			netModification->key = currentObject->key;
+			netModification->value = currentObject->value;
+		}
+		else {
+			netModification->value = currentObject->value * -1;
+
+			if (!strcmp(currentObject->key, "W"))
+				netModification->key = "S";
+			else if (!strcmp(currentObject->key, "S"))
+				netModification->key = "W";
+			else if (!strcmp(currentObject->key, "A"))
+				netModification->key = "D";
+			else if (!strcmp(currentObject->key, "D"))
+				netModification->key = "A";
+			else if (!strcmp(currentObject->key, "CW"))
+				netModification->key = "CCW";
+			else if (!strcmp(currentObject->key, "CCW"))
+				netModification->key = "CW";
+			else if (!strcmp(currentObject->key, "MX")) {
+				netModification->key = "MX";
+				netModification->value = 1;			
+			}
+			else if (!strcmp(currentObject->key, "MY")) {
+				netModification->key = "MY";
+				netModification->value = 1;			
+			}
+		}
+		
 		return;
 	}
 
 	if(!strcmp(netModification->key, currentObject->key)) {
+		
+		//Handle Mirror separately		
+		if(!strcmp(netModification->key, "MX") || !strcmp(netModification->key, "MY")) {
+			if (netModification->value == 1) {
+				netModification->value = 0;
+				netModification->key = NULL;
+			}			
+
+			return;
+		}
+
 		netModification->value += currentObject->value;
 	}
-	else {
+	else {	
+		//All other cases
 		netModification->value -= currentObject->value;
 
 		if (netModification->value == 0) {
@@ -577,6 +606,15 @@ void printCheck() {
 			printf("Need to rotate CCW by %d\n",netModifications[rotation].value);
 		}
 	}
+
+	if (netModifications[mirrorx].key != NULL) {
+		printf("Need to mirror X by %d\n",netModifications[mirrorx].value);
+	}
+
+	if (netModifications[mirrory].key != NULL) {
+		printf("Need to mirror Y by %d\n",netModifications[mirrorx].value);
+	}
+
 }
 
 void implementation_driver(struct kv* sensor_values, int sensor_values_count, unsigned char * frame_buffer, unsigned int width, unsigned int height, bool grading_mode) {
@@ -587,61 +625,84 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 	int sensorValue;
 	int sensorValueIdx;
 
+	int lastOperation, currentOperation;
+
+	netModifications[vertical].key = NULL;
+	netModifications[horizontal].key = NULL;
+	netModifications[rotation].key = NULL;
+	netModifications[mirrorx].key = NULL;
+	netModifications[mirrory].key = NULL;
+
+	netModifications[vertical].value = 0;
+	netModifications[horizontal].value = 0;
+	netModifications[rotation].value = 0;
+	netModifications[mirrorx].value = 0;
+	netModifications[mirrory].value = 0;
+
+        rendered_frame = allocateFrame(width, height);
+
 	for(sensorValueIdx = 0; sensorValueIdx < sensor_values_count; sensorValueIdx++) {
-		
+
+		if(sensorValueIdx == 0)
+			lastOperation = nooperation;
+
 		sensorKey = sensor_values[sensorValueIdx].key;
-		sensorValue = sensor_values[sensorValueIdx].value;
-		
+		sensorValue = sensor_values[sensorValueIdx].value;		
+
 		if (!strcmp(sensorKey, "W") || !strcmp(sensorKey, "S")) {
+			currentOperation = translation;
 			
+			if(lastOperation != nooperation && currentOperation != lastOperation) {
+				//printf("Current operation Translation Vertical ");printCheck();				
+				//Perform rotation if any
+				if (netModifications[rotation].key != NULL) {
+
+				if (!strcmp(netModifications[rotation].key, "CW")) {
+					frame_buffer = processRotateCW(frame_buffer, width, height, 						netModifications[rotation].value);
+					netModifications[rotation].key = NULL;
+					netModifications[rotation].value = 0;
+				}
+				else {
+					frame_buffer = processRotateCCW(frame_buffer, width, height, 						netModifications[rotation].value);
+					netModifications[rotation].key = NULL;
+					netModifications[rotation].value = 0;
+				}
+
+				}
+
+				//Perform mirrorx if any
+				if (netModifications[mirrorx].key != NULL) {
+
+					frame_buffer = processMirrorX(frame_buffer, width, height, 						netModifications[mirrorx].value);
+					netModifications[mirrorx].key = NULL;
+					netModifications[mirrorx].value = 0;
+					
+				}
+
+				//Perform mirrory if any
+				if (netModifications[mirrory].key != NULL) {
+
+					frame_buffer = processMirrorY(frame_buffer, width, height, 						netModifications[mirrory].value);
+					netModifications[mirrory].key = NULL;
+					netModifications[mirrory].value = 0;
+					
+				}
+
+			}
+
 			updateNetModification(&netModifications[vertical], &(sensor_values[sensorValueIdx]));
 			processed_frames += 1;
+			lastOperation = currentOperation;
+
 		}
 		else if (!strcmp(sensorKey, "A") || !strcmp(sensorKey, "D")) {
-			updateNetModification(&netModifications[horizontal], &(sensor_values[sensorValueIdx]));
-			processed_frames += 1;
-		}
-		else if (!strcmp(sensorKey, "CW") || !strcmp(sensorKey, "CCW")) {
-			updateNetModification(&netModifications[rotation], &(sensor_values[sensorValueIdx]));
-			processed_frames += 1;
-		}
-		else if (!strcmp(sensorKey, "MX") || !strcmp(sensorKey, "MY")) {
+			currentOperation = translation;
 
-			if (netModifications[vertical].key != NULL) {
-printCheck();
-printf("Vertical Check\n");
-				if (!strcmp(netModifications[vertical].key, "W")) {
-					frame_buffer = processMoveUp(frame_buffer, width, height, 						netModifications[vertical].value);
-					netModifications[vertical].key = NULL;
-					netModifications[vertical].value = 0;
-				}
-				else {
-					frame_buffer = processMoveDown(frame_buffer, width, height, 						netModifications[vertical].value);
-					netModifications[vertical].key = NULL;
-					netModifications[vertical].value = 0;
-				}
+			if(lastOperation != nooperation && currentOperation != lastOperation) {
+				//printf("Current operation Translation Horizontal ");printCheck();				
+				//Perform rotation if any
+				if (netModifications[rotation].key != NULL) {
 
-			}
-			
-			if (netModifications[horizontal].key != NULL) {
-printCheck();
-printf("Horizontal Check\n");
-				if (!strcmp(netModifications[horizontal].key, "A")) {
-					frame_buffer = processMoveLeft(frame_buffer, width, height, 						netModifications[horizontal].value);
-					netModifications[horizontal].key = NULL;
-					netModifications[horizontal].value = 0;
-				}
-				else {
-					frame_buffer = processMoveRight(frame_buffer, width, height, 						netModifications[horizontal].value);
-					netModifications[horizontal].key = NULL;
-					netModifications[horizontal].value = 0;
-				}
-
-			}
-
-			if (netModifications[rotation].key != NULL) {
-printCheck();
-printf("Rotation Check\n");
 				if (!strcmp(netModifications[rotation].key, "CW")) {
 					frame_buffer = processRotateCW(frame_buffer, width, height, 						netModifications[rotation].value);
 					netModifications[rotation].key = NULL;
@@ -653,25 +714,167 @@ printf("Rotation Check\n");
 					netModifications[rotation].value = 0;
 				}
 
-			}
-			
-			if (!strcmp(sensorKey, "MX")) {
+				}
 
-				frame_buffer = processMirrorX(frame_buffer, width, height, sensorValue);
-				processed_frames += 1;
+				//Perform mirrorx if any
+				if (netModifications[mirrorx].key != NULL) {
+
+					frame_buffer = processMirrorX(frame_buffer, width, height, 						netModifications[mirrorx].value);
+					netModifications[mirrorx].key = NULL;
+					netModifications[mirrorx].value = 0;
+					
+				}
+
+				//Perform mirrory if any
+				if (netModifications[mirrory].key != NULL) {
+
+					frame_buffer = processMirrorY(frame_buffer, width, height, 						netModifications[mirrory].value);
+					netModifications[mirrory].key = NULL;
+					netModifications[mirrory].value = 0;
+					
+				}
+
+			}
+
+			updateNetModification(&netModifications[horizontal], &(sensor_values[sensorValueIdx]));
+			processed_frames += 1;
+			lastOperation = currentOperation;
+
+		}
+		else if (!strcmp(sensorKey, "CW") || !strcmp(sensorKey, "CCW")) {
+			currentOperation = rotation;
+
+			if(lastOperation != nooperation && currentOperation != lastOperation) {
+				//printf("Current operation Rotation ");printCheck();				
+
+				//Perform translation if any
+				if (netModifications[vertical].key != NULL) {
+
+				if (!strcmp(netModifications[vertical].key, "W")) {
+					frame_buffer = processMoveUp(frame_buffer, width, height, 						netModifications[vertical].value);
+					netModifications[vertical].key = NULL;
+					netModifications[vertical].value = 0;
+				}
+				else {
+					frame_buffer = processMoveDown(frame_buffer, width, height, 						netModifications[vertical].value);
+					netModifications[vertical].key = NULL;
+					netModifications[vertical].value = 0;
+				}
+
+				}
+			
+			        if (netModifications[horizontal].key != NULL) {
+
+				if (!strcmp(netModifications[horizontal].key, "A")) {
+					frame_buffer = processMoveLeft(frame_buffer, width, height, 						netModifications[horizontal].value);
+					netModifications[horizontal].key = NULL;
+					netModifications[horizontal].value = 0;
+				}
+				else {
+					frame_buffer = processMoveRight(frame_buffer, width, height, 						netModifications[horizontal].value);
+					netModifications[horizontal].key = NULL;
+					netModifications[horizontal].value = 0;
+				}
+
+				}
+
+				//Perform mirrorx if any
+				if (netModifications[mirrorx].key != NULL) {
+
+					frame_buffer = processMirrorX(frame_buffer, width, height, 						netModifications[mirrorx].value);
+					netModifications[mirrorx].key = NULL;
+					netModifications[mirrorx].value = 0;
+					
+				}
+
+				//Perform mirrory if any
+				if (netModifications[mirrory].key != NULL) {
+
+					frame_buffer = processMirrorY(frame_buffer, width, height, 						netModifications[mirrory].value);
+					netModifications[mirrory].key = NULL;
+					netModifications[mirrory].value = 0;
+					
+				}
+
+			}
+
+			updateNetModification(&netModifications[rotation], &(sensor_values[sensorValueIdx]));
+			processed_frames += 1;
+			lastOperation = currentOperation;
+
+		}
+		else if (!strcmp(sensorKey, "MX") || !strcmp(sensorKey, "MY")) {
+			currentOperation = mirror;
+
+			if(lastOperation != nooperation && currentOperation != lastOperation) {
+				//printf("Current operation Mirror ");printCheck();				
+				//Perform translation if any
+				if (netModifications[vertical].key != NULL) {
+
+				if (!strcmp(netModifications[vertical].key, "W")) {
+					frame_buffer = processMoveUp(frame_buffer, width, height, 						netModifications[vertical].value);
+					netModifications[vertical].key = NULL;
+					netModifications[vertical].value = 0;
+				}
+				else {
+					frame_buffer = processMoveDown(frame_buffer, width, height, 						netModifications[vertical].value);
+					netModifications[vertical].key = NULL;
+					netModifications[vertical].value = 0;
+				}
+
+				}
+			
+			        if (netModifications[horizontal].key != NULL) {
+
+				if (!strcmp(netModifications[horizontal].key, "A")) {
+					frame_buffer = processMoveLeft(frame_buffer, width, height, 						netModifications[horizontal].value);
+					netModifications[horizontal].key = NULL;
+					netModifications[horizontal].value = 0;
+				}
+				else {
+					frame_buffer = processMoveRight(frame_buffer, width, height, 						netModifications[horizontal].value);
+					netModifications[horizontal].key = NULL;
+					netModifications[horizontal].value = 0;
+				}
+
+				}
+
+				//Perform rotation if any
+				if (netModifications[rotation].key != NULL) {
+
+				if (!strcmp(netModifications[rotation].key, "CW")) {
+					frame_buffer = processRotateCW(frame_buffer, width, height, 						netModifications[rotation].value);
+					netModifications[rotation].key = NULL;
+					netModifications[rotation].value = 0;
+				}
+				else {
+					frame_buffer = processRotateCCW(frame_buffer, width, height, 						netModifications[rotation].value);
+					netModifications[rotation].key = NULL;
+					netModifications[rotation].value = 0;
+				}
+
+				}
+				
+
+			}
+
+			if (!strcmp(sensorKey, "MX")) {
+				updateNetModification(&netModifications[mirrorx], &(sensor_values[sensorValueIdx]));
+				
 			}
 			else if (!strcmp(sensorKey, "MY")) {
-
-				frame_buffer = processMirrorY(frame_buffer, width, height, sensorValue);
-				processed_frames += 1;
+				updateNetModification(&netModifications[mirrory], &(sensor_values[sensorValueIdx]));
 			}
+			
+			processed_frames += 1;
+			lastOperation = currentOperation;
 
 		}
 
-		if (processed_frames % 5 == 0) {
+		if (processed_frames % 25 == 0) {
+			//printCheck();
+			//Perform translation if any
 			if (netModifications[vertical].key != NULL) {
-printCheck();
-printf("Vertical 2 Check\n");
 		
 				if (!strcmp(netModifications[vertical].key, "W")) {
 					frame_buffer = processMoveUp(frame_buffer, width, height, 						netModifications[vertical].value);
@@ -687,8 +890,7 @@ printf("Vertical 2 Check\n");
 			}
 			
 			if (netModifications[horizontal].key != NULL) {
-printCheck();
-printf("Horizontal 2 Check\n");
+
 				if (!strcmp(netModifications[horizontal].key, "A")) {
 					frame_buffer = processMoveLeft(frame_buffer, width, height, 						netModifications[horizontal].value);
 					netModifications[horizontal].key = NULL;
@@ -702,9 +904,9 @@ printf("Horizontal 2 Check\n");
 
 			}
 
+			//Perform rotation if any
 			if (netModifications[rotation].key != NULL) {
-printCheck();
-printf("Rotation 2 Check\n");
+
 				if (!strcmp(netModifications[rotation].key, "CW")) {
 					frame_buffer = processRotateCW(frame_buffer, width, height, 						netModifications[rotation].value);
 					netModifications[rotation].key = NULL;
@@ -718,10 +920,30 @@ printf("Rotation 2 Check\n");
 
 			}
 
+			//Perform mirrorx if any
+			if (netModifications[mirrorx].key != NULL) {
+
+				frame_buffer = processMirrorX(frame_buffer, width, height, 						netModifications[mirrorx].value);
+				netModifications[mirrorx].key = NULL;
+				netModifications[mirrorx].value = 0;
+					
+			}
+
+			//Perform mirrory if any
+			if (netModifications[mirrory].key != NULL) {
+
+				frame_buffer = processMirrorY(frame_buffer, width, height, 						netModifications[mirrory].value);
+				netModifications[mirrory].key = NULL;
+				netModifications[mirrory].value = 0;
+					
+			}
+			
 			verifyFrame(frame_buffer, width, height, grading_mode);
 		}
 
 	}
 
+	deallocateFrame(rendered_frame);
+
 	return;
-}*/
+}
