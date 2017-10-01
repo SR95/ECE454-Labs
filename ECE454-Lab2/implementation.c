@@ -18,6 +18,20 @@ struct kv netModifications[5];
 #define nooperation 7
 
 unsigned char* rendered_frame;
+unsigned char* sparseMatrix;
+	
+int sparseMatrixParameters[10];
+/*Element 0 is original topX (representing the top row bound)
+  Element 1 is original bottomX (representing the bottom row bound)
+  Element 2 is original leftY (representing the left column bound)
+  Element 3 is original rightY (representing the right column bound)
+  Element 4 is changing topX (initial value is same as original topX)
+  Element 5 is changing bottomX (initial value is same as original bottomX)
+  Element 6 is changing leftY (initial value is same as original leftY)
+  Element 7 is changing rightY (initial value is same as original rightY)
+  Element 8 is sparse matrix width
+  Element 9 is sparse matrix height
+*/
 
 // Declariations
 unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsigned height, int offset);
@@ -206,14 +220,15 @@ unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsi
         return processMoveRight(buffer_frame, width, height, offset * -1);
     }
 
-    /* Implementing memcpy version, currently not working
-    unsigned char *sourcePtr, *destPtr, *tempPtr;
+    // Implementing memcpy version, currently not working
+    /*unsigned char *sourcePtr, *destPtr, *tempPtr;
 
     for (int row = 0; row < height; row++) {
-
-  	    sourcePtr = buffer_frame + (row * width * 3);
-	    destPtr = buffer_frame + (row * width * 3) + offset;
-            memcpy(destPtr,sourcePtr,((width - offset) * 3));
+	    //printf("Source Ptr: %p\n",sourcePtr);
+	    //printf("Dest Ptr: %p\n",destPtr);
+  	    sourcePtr = buffer_frame + (row * width * 3) + offset;
+	    destPtr = buffer_frame + (row * width * 3);
+            memcpy(destPtr,sourcePtr,((width - offset - 1) * 3));
        
     }*/
 
@@ -655,6 +670,121 @@ void printCheck() {
 
 }
 
+void findSparseMatrix (unsigned char * frame_buffer, int width, int height)
+{
+	int row, column;
+
+	int topX = height - 1;
+	int bottomX = 0;
+	int leftY = width - 1;
+	int rightY = 0;
+
+	int R,G,B;
+
+	int frame_buffer_index;
+
+	for (row = 0; row < width; row++)
+		for (column = 0; column < height; column++) {
+	
+			frame_buffer_index = (row * width * 3) + (column * 3);
+			R = frame_buffer[frame_buffer_index];
+			G = frame_buffer[frame_buffer_index + 1];
+			B = frame_buffer[frame_buffer_index + 2];
+			
+			if (R != 255 || G != 255 || B != 255) {
+				if (row < topX)
+					topX = row;
+				if (row > bottomX)
+					bottomX = row;
+				if (column < leftY)
+					leftY = column;
+				if (column > rightY)
+					rightY = column;
+			} 
+
+	}
+
+	//Alloc sparseMatrix and fill it up with values
+	int sparseWidth, sparseHeight; 
+	sparseWidth = rightY - leftY + 1;
+	sparseHeight = bottomX - topX + 1;
+	
+	sparseMatrixParameters[0] = topX;
+	sparseMatrixParameters[1] = bottomX;
+	sparseMatrixParameters[2] = leftY;
+	sparseMatrixParameters[3] = rightY;
+	sparseMatrixParameters[4] = topX;
+	sparseMatrixParameters[5] = bottomX;
+	sparseMatrixParameters[6] = leftY;
+	sparseMatrixParameters[7] = rightY;
+	sparseMatrixParameters[8] = sparseWidth;
+	sparseMatrixParameters[9] = sparseHeight;
+
+	//Don't forget to deallocate after use!
+	sparseMatrix = allocateFrame(sparseWidth, sparseHeight);
+
+	for (row = topX; row <= bottomX; row++) {
+		for (column = leftY; column <= rightY; column++) {
+
+			int sourceIndex = row * width * 3 + column * 3;
+			int destIndex = ((row - topX) * sparseWidth * 3) + ((column - leftY) * 3);
+
+			sparseMatrix[destIndex] = frame_buffer[sourceIndex];
+			sparseMatrix[destIndex + 1] = frame_buffer[sourceIndex + 1];
+			sparseMatrix[destIndex + 2] = frame_buffer[sourceIndex + 2];
+		}
+	}
+
+}
+
+unsigned char* drawSparseMatrixInImage (unsigned char* frame_buffer, int width, int height) {
+
+	/*Done in two for loops as of now to deal with the event in which
+	  the original and new sparseMatrix locations overlap with each other
+	  This can be optimized later
+	*/
+
+	int originalTopX = sparseMatrixParameters[0];
+	int originalBottomX = sparseMatrixParameters[1];
+	int originalLeftY = sparseMatrixParameters[2];
+	int originalRightY = sparseMatrixParameters[3];
+	int newTopX = sparseMatrixParameters[4];
+	int newBottomX = sparseMatrixParameters[5];
+	int newLeftY = sparseMatrixParameters[6];
+	int newRightY = sparseMatrixParameters[7];	
+	int sparseWidth = sparseMatrixParameters[8];
+	int sparseHeight = sparseMatrixParameters[9];
+
+	//Drawing white pixels in old location
+	for (int row = 0; row < sparseWidth; row++) {
+		for(int column = 0; column < sparseHeight; column++) {
+
+			int whiteIndex = ((row + originalTopX) * width * 3) + (column + originalLeftY) * 3;
+
+			frame_buffer[whiteIndex] = 255;
+			frame_buffer[whiteIndex+1] = 255;
+			frame_buffer[whiteIndex+2] = 255;
+		}
+
+	}
+
+	//Drawing new pixels in the new location
+	for (int row = 0; row < sparseWidth; row++) {
+		for(int column = 0; column < sparseHeight; column++) {
+
+			int sparseMatrixIndex = row * width * 3 + column * 3;
+			int drawPixelIndex = ((row + newTopX) * width * 3) + (column + newLeftY) * 3;
+			frame_buffer[drawPixelIndex] = sparseMatrix[sparseMatrixIndex];
+			frame_buffer[drawPixelIndex + 1] = sparseMatrix[sparseMatrixIndex + 1];
+			frame_buffer[drawPixelIndex + 2] = sparseMatrix[sparseMatrixIndex + 2];
+		
+		}
+	}
+
+	return frame_buffer;
+	
+}
+
 void implementation_driver(struct kv* sensor_values, int sensor_values_count, unsigned char * frame_buffer, unsigned int width, unsigned int height, bool grading_mode) {
 	
 	int processed_frames = 0;
@@ -664,6 +794,9 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 	int sensorValueIdx;
 
 	int lastOperation, currentOperation;
+	//printBMP(width, height, frame_buffer);
+	findSparseMatrix(frame_buffer, width, height);
+	//printBMP(7, 4, sparseMatrix);
 
 	netModifications[vertical].key = NULL;
 	netModifications[horizontal].key = NULL;
@@ -982,20 +1115,7 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 	}
 
 	deallocateFrame(rendered_frame);
+	deallocateFrame(sparseMatrix);
 
 	return;
 }
-
-//Trying out something with CCW
-/*
-for (int row = 0; row < height/2; row++) {
-        for (int column = row; column < width - row - 1; column++) 
-             {
-                int temp = buffer_frame[row * width * 3 + column * 3];
-                buffer_frame[row * width * 3 + column * 3] = buffer_frame[(column * width * 3) + (width - 1 - row)];
-buffer_frame[(column * width * 3) + (width - 1 - row)] = buffer_frame[((height - 1 - row) * width * 3) + (width - 1 - column)];
-buffer_frame[((height - 1 - row) * width * 3) + (width - 1 - column)] = buffer_frame[((width - 1 - column) * width * 3) +(row)];
-		buffer_frame[((width - 1 - column) * width * 3) + (row)] = temp;
-            }
-
-        }*/
