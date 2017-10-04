@@ -6,6 +6,7 @@
 #include "implementation.h"
 
 struct kv netModifications[5];
+struct kv simplifiedInstructions[25];
 
 #define vertical 0
 #define horizontal 1
@@ -18,9 +19,10 @@ struct kv netModifications[5];
 #define nooperation 7
 
 unsigned char* rendered_frame;
+unsigned char* rendered_frame_sparse_matrix;
 unsigned char* sparseMatrix;
 	
-int sparseMatrixParameters[10];
+int sparseMatrixParameters[12];
 /*Element 0 is original topX (representing the top row bound)
   Element 1 is original bottomX (representing the bottom row bound)
   Element 2 is original leftY (representing the left column bound)
@@ -29,8 +31,10 @@ int sparseMatrixParameters[10];
   Element 5 is changing bottomX (initial value is same as original bottomX)
   Element 6 is changing leftY (initial value is same as original leftY)
   Element 7 is changing rightY (initial value is same as original rightY)
-  Element 8 is sparse matrix width
-  Element 9 is sparse matrix height
+  Element 8 is changing sparse matrix width
+  Element 9 is changing sparse matrix height
+  Element 10 is original sparse matrix width
+  Element 11 is original sparse matrix height
 */
 
 // Declariations
@@ -70,19 +74,6 @@ unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsign
   	    sourcePtr = destPtr + (offset*width*3);
   	    memcpy(destPtr, sourcePtr, width*3);
     }
-
-    /************** DOUBLE FOR LOOP VERSION ************************
-    // store shifted pixels to temporary buffer
-    for (int row = 0; row < (height - offset); row++) {
-        for (int column = 0; column < width; column++) {
-            int position_rendered_frame = row * width * 3 + column * 3;
-            int position_buffer_frame = (row + offset) * width * 3 + column * 3;
-            buffer_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
-            buffer_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
-            buffer_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
-        }
-    }
-    /**********************************************************/
 
     // fill left over pixels with white pixels
     for (int row = (height - offset); row < height; row++) {
@@ -271,7 +262,7 @@ unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsi
  * Note: You can assume the frame will always be square and you will be rotating the entire image
  **********************************************************************************************************************/
 unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsigned height, int rotate_iteration) {
-
+	
     // handle negative offsets
     if (rotate_iteration < 0){
         return processRotateCCW(buffer_frame, width, height, rotate_iteration * -1);
@@ -295,8 +286,8 @@ unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsi
         int render_column = width - 1;
         int render_row = height - 1;
 
-        for (int row = 0; row < width; row++) {
-            for (int column = 0; column < height; column++) {
+        for (int row = 0; row < height; row++) {
+            for (int column = 0; column < width; column++) {
                 int position_frame_buffer = row * width * 3 + column * 3;
                 rendered_frame[render_row * width * 3 + render_column * 3] = buffer_frame[position_frame_buffer];
                 rendered_frame[render_row * width * 3 + render_column * 3 + 1] = buffer_frame[position_frame_buffer + 1];
@@ -314,26 +305,36 @@ unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsi
     	return buffer_frame;
     }
 
+
+    //This is done for the sparse matrix. If not using sparse matrix, still okay
+    //because input image is considered to be square at all times
+    int newWidth = height;
+    int newHeight = width;
+
     // store shifted pixels to temporary buffer
-    for (int iteration = 0; iteration < rotate_iteration; iteration++) {
-        int render_column = width-1;
+
+        int render_column = height-1;
         int render_row = 0;
-	for (int column = 0; column < height; column++) {
-        for (int row = 0; row < width; row++) 
-             {
+	for (int column = 0; column < width; column++) {
+        for (int row = 0; row < height; row++) 
+             {  //printf("(%d,%d) goes to (%d,%d)\n",row,column,render_row,render_column);
                 int position_frame_buffer = row * width * 3 + column * 3;
-                rendered_frame[render_row * width * 3 + render_column * 3] = buffer_frame[position_frame_buffer];
-                rendered_frame[render_row * width * 3 + render_column * 3 + 1] = buffer_frame[position_frame_buffer + 1];
-                rendered_frame[render_row * width * 3 + render_column * 3 + 2] = buffer_frame[position_frame_buffer + 2];
+                rendered_frame[render_row * newWidth * 3 + render_column * 3] = buffer_frame[position_frame_buffer];
+                rendered_frame[render_row * newWidth * 3 + render_column * 3 + 1] = buffer_frame[position_frame_buffer + 1];
+                rendered_frame[render_row * newWidth * 3 + render_column * 3 + 2] = buffer_frame[position_frame_buffer + 2];
                 render_column -= 1;
             }
             render_row += 1;
-            render_column = width-1;
+            render_column = height-1;
         }
 
         // copy the temporary buffer back to original frame buffer
         buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
-    }
+	
+    //Only do this for sparse matrix
+    sparseMatrixParameters[8] = newWidth;
+    sparseMatrixParameters[9] = newHeight;
+    //printf("New Width: %d\nNew Height: %d\n", sparseMatrixParameters[8], sparseMatrixParameters[9]);
 
     // return a pointer to the updated image buffer
     return buffer_frame;
@@ -373,8 +374,8 @@ unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, uns
         int render_column = width - 1;
         int render_row = height - 1;
 
-        for (int row = 0; row < width; row++) {
-            for (int column = 0; column < height; column++) {
+        for (int row = 0; row < height; row++) {
+            for (int column = 0; column < width; column++) {
                 int position_frame_buffer = row * width * 3 + column * 3;
                 rendered_frame[render_row * width * 3 + render_column * 3] = buffer_frame[position_frame_buffer];
                 rendered_frame[render_row * width * 3 + render_column * 3 + 1] = buffer_frame[position_frame_buffer + 1];
@@ -392,17 +393,20 @@ unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, uns
     	return buffer_frame;
     }
 
+    int newWidth = height;
+    int newHeight = width;
+
     // store shifted pixels to temporary buffer
-    for (int iteration = 0; iteration < rotate_iteration; iteration++) {
         int render_column = 0;
-        int render_row = height-1;
-	for (int column = 0; column < height; column++) {
-        for (int row = 0; row < width; row++) 
+        int render_row = newHeight-1;
+	for (int column = 0; column < width; column++) {
+        for (int row = 0; row < height; row++) 
              {
+		//printf("(%d,%d) goes to (%d,%d)\n",row,column,render_row,render_column);
                 int position_frame_buffer = row * width * 3 + column * 3;
-                rendered_frame[render_row * width * 3 + render_column * 3] = buffer_frame[position_frame_buffer];
-                rendered_frame[render_row * width * 3 + render_column * 3 + 1] = buffer_frame[position_frame_buffer + 1];
-                rendered_frame[render_row * width * 3 + render_column * 3 + 2] = buffer_frame[position_frame_buffer + 2];
+                rendered_frame[render_row * newWidth * 3 + render_column * 3] = buffer_frame[position_frame_buffer];
+                rendered_frame[render_row * newWidth * 3 + render_column * 3 + 1] = buffer_frame[position_frame_buffer + 1];
+                rendered_frame[render_row * newWidth * 3 + render_column * 3 + 2] = buffer_frame[position_frame_buffer + 2];
                 render_column += 1;
             }
             render_row -= 1;
@@ -411,7 +415,11 @@ unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, uns
 
         // copy the temporary buffer back to original frame buffer
         buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
-    }
+
+    //Only do this for sparse matrix
+    sparseMatrixParameters[8] = newWidth;
+    sparseMatrixParameters[9] = newHeight;
+    //printf("New Width: %d\nNew Height: %d\n", sparseMatrixParameters[8], sparseMatrixParameters[9]);
 
     // return a pointer to the updated image buffer
     return buffer_frame;
@@ -429,8 +437,8 @@ unsigned char *processMirrorX(unsigned char *buffer_frame, unsigned int width, u
     // store shifted pixels to temporary buffer
     for (int row = 0; row < height; row++) {
         for (int column = 0; column < width; column++) {
-            int position_rendered_frame = row * height * 3 + column * 3;
-            int position_buffer_frame = (height - row - 1) * height * 3 + column * 3;
+            int position_rendered_frame = row * width * 3 + column * 3;
+            int position_buffer_frame = (height - row - 1) * width * 3 + column * 3;
             rendered_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
             rendered_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
             rendered_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
@@ -457,8 +465,8 @@ unsigned char *processMirrorY(unsigned char *buffer_frame, unsigned width, unsig
     // store shifted pixels to temporary buffer
     for (int row = 0; row < height; row++) {
         for (int column = 0; column < width; column++) {
-            int position_rendered_frame = row * height * 3 + column * 3;
-            int position_buffer_frame = row * height * 3 + (width - column - 1) * 3;
+            int position_rendered_frame = row * width * 3 + column * 3;
+            int position_buffer_frame = row * width * 3 + (width - column - 1) * 3;
             rendered_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
             rendered_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
             rendered_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
@@ -502,69 +510,6 @@ void print_team_info(){
     printf("\tstudent2_last_name: %s\n", student2_last_name);
     printf("\tstudent2_student_number: %s\n", student2_student_number);
 }
-
-/***********************************************************************************************************************
- * WARNING: Do not modify the implementation_driver and team info prototype (name, parameter, return value) !!!
- *          You can modify anything else in this file
- ***********************************************************************************************************************
- * @param sensor_values - structure stores parsed key value pairs of program instructions
- * @param sensor_values_count - number of valid sensor values parsed from sensor log file or commandline console
- * @param frame_buffer - pointer pointing to a buffer storing the imported  24-bit bitmap image
- * @param width - width of the imported 24-bit bitmap image
- * @param height - height of the imported 24-bit bitmap image
- * @param grading_mode - turns off verification and turn on instrumentation
- ***********************************************************************************************************************
- *
- **********************************************************************************************************************/
-/*void implementation_driver(struct kv *sensor_values, int sensor_values_count, unsigned char *frame_buffer,
-                           unsigned int width, unsigned int height, bool grading_mode) {
-    int processed_frames = 0;
-    
-    char* sensorKey;
-    int sensorValue;
-
-    int sensorValueIdx;
-
-    for (sensorValueIdx = 0; sensorValueIdx < sensor_values_count; sensorValueIdx++) {
-//        printf("Processing sensor value #%d: %s, %d\n", sensorValueIdx, sensor_values[sensorValueIdx].key,
-//               sensor_values[sensorValueIdx].value);
-
-	sensorKey = sensor_values[sensorValueIdx].key;
-	sensorValue = sensor_values[sensorValueIdx].value;
-
-        if (!strcmp(sensorKey, "W")) {
-            frame_buffer = processMoveUp(frame_buffer, width, height, sensorValue);
-//            printBMP(width, height, frame_buffer);
-        } else if (!strcmp(sensorKey, "A")) {
-            frame_buffer = processMoveLeft(frame_buffer, width, height, sensorValue);
-//            printBMP(width, height, frame_buffer);
-        } else if (!strcmp(sensorKey, "S")) {
-            frame_buffer = processMoveDown(frame_buffer, width, height, sensorValue);
-//            printBMP(width, height, frame_buffer);
-        } else if (!strcmp(sensorKey, "D")) {
-            frame_buffer = processMoveRight(frame_buffer, width, height, sensorValue);
-//            printBMP(width, height, frame_buffer);
-        } else if (!strcmp(sensorKey, "CW")) {
-            frame_buffer = processRotateCW(frame_buffer, width, height, sensorValue);
-//            printBMP(width, height, frame_buffer);
-        } else if (!strcmp(sensorKey, "CCW")) {
-            frame_buffer = processRotateCCW(frame_buffer, width, height, sensorValue);
-//            printBMP(width, height, frame_buffer);
-        } else if (!strcmp(sensorKey, "MX")) {
-            frame_buffer = processMirrorX(frame_buffer, width, height, sensorValue);
-//            printBMP(width, height, frame_buffer);
-        } else if (!strcmp(sensorKey, "MY")) {
-            frame_buffer = processMirrorY(frame_buffer, width, height, sensorValue);
-//            printBMP(width, height, frame_buffer);
-        }
-        processed_frames += 1;
-        if (processed_frames % 1 == 0) {
-            verifyFrame(frame_buffer, width, height, grading_mode);
-        }
-    }
-
-    return;
-}*/
 
 void updateNetModification(struct kv* netModification, struct kv* currentObject) {
 	
@@ -719,6 +664,8 @@ void findSparseMatrix (unsigned char * frame_buffer, int width, int height)
 	sparseMatrixParameters[7] = rightY;
 	sparseMatrixParameters[8] = sparseWidth;
 	sparseMatrixParameters[9] = sparseHeight;
+	sparseMatrixParameters[10] = sparseWidth;
+	sparseMatrixParameters[11] = sparseHeight;
 
 	//Don't forget to deallocate after use!
 	sparseMatrix = allocateFrame(sparseWidth, sparseHeight);
@@ -752,41 +699,113 @@ unsigned char* drawSparseMatrixInImage (unsigned char* frame_buffer, int width, 
 	int newBottomX = sparseMatrixParameters[5];
 	int newLeftY = sparseMatrixParameters[6];
 	int newRightY = sparseMatrixParameters[7];	
-	int sparseWidth = sparseMatrixParameters[8];
-	int sparseHeight = sparseMatrixParameters[9];
+	int newSparseWidth = sparseMatrixParameters[8];
+	int newSparseHeight = sparseMatrixParameters[9];
+	int originalSparseWidth = sparseMatrixParameters[10];
+	int originalSparseHeight = sparseMatrixParameters[11];
 
-	//Drawing white pixels in old location
-	for (int row = 0; row < sparseWidth; row++) {
-		for(int column = 0; column < sparseHeight; column++) {
+	unsigned char *sparseMatrixPtr, *drawPixelPtr;
 
-			int whiteIndex = ((row + originalTopX) * width * 3) + (column + originalLeftY) * 3;
-
-			frame_buffer[whiteIndex] = 255;
-			frame_buffer[whiteIndex+1] = 255;
-			frame_buffer[whiteIndex+2] = 255;
-		}
-
+	for (int row = 0; row < originalSparseHeight; row++) {
+		drawPixelPtr = frame_buffer + ((row + originalTopX) * width * 3) + (originalLeftY * 3);
+		memset(drawPixelPtr, 255, originalSparseWidth*3);
 	}
 
-	//Drawing new pixels in the new location
-	for (int row = 0; row < sparseWidth; row++) {
-		for(int column = 0; column < sparseHeight; column++) {
+	for (int row = 0; row < newSparseHeight; row++) {
 
-			int sparseMatrixIndex = row * width * 3 + column * 3;
-			int drawPixelIndex = ((row + newTopX) * width * 3) + (column + newLeftY) * 3;
-			frame_buffer[drawPixelIndex] = sparseMatrix[sparseMatrixIndex];
-			frame_buffer[drawPixelIndex + 1] = sparseMatrix[sparseMatrixIndex + 1];
-			frame_buffer[drawPixelIndex + 2] = sparseMatrix[sparseMatrixIndex + 2];
-		
-		}
+		sparseMatrixPtr = sparseMatrix + (row * newSparseWidth * 3);
+		drawPixelPtr = frame_buffer + ((row + newTopX) * width * 3) + (newLeftY * 3);
+		memcpy(drawPixelPtr, sparseMatrixPtr, newSparseWidth*3);
 	}
 
 	return frame_buffer;
 	
 }
 
+void updateSparseMatrixParameters(int operationType, char* operation, int magnitude, int width, int height) {
+
+	if (operationType == translation) {
+
+		if (!strcmp(operation, "W")) {
+			sparseMatrixParameters[4] -= magnitude;
+			sparseMatrixParameters[5] -= magnitude;
+		}
+		else if (!strcmp(operation, "S")) {
+			sparseMatrixParameters[4] += magnitude;
+			sparseMatrixParameters[5] += magnitude;
+		}
+		else if (!strcmp(operation, "A")) {
+			sparseMatrixParameters[6] -= magnitude;
+			sparseMatrixParameters[7] -= magnitude;
+		}
+		else if (!strcmp(operation, "D")) {
+			sparseMatrixParameters[6] += magnitude;
+			sparseMatrixParameters[7] += magnitude;
+		}		
+
+	}
+	else if (operationType == rotation) {
+
+		int topX = sparseMatrixParameters[4];
+		int bottomX = sparseMatrixParameters[5];
+		int leftY = sparseMatrixParameters[6];
+		int rightY = sparseMatrixParameters[7];
+
+		if ( (!strcmp(operation, "CW") && ((magnitude - 1) % 4 == 0))
+			|| (!strcmp(operation, "CCW") && ((magnitude - 3) % 4 == 0))) {
+
+			//Rotation CW 90 degrees or CCW 270 degrees
+			sparseMatrixParameters[4] = leftY;
+			sparseMatrixParameters[5] = rightY;
+			sparseMatrixParameters[6] = width - 1 - bottomX;
+			sparseMatrixParameters[7] = width - 1 - topX;
+		}
+		else if ( (!strcmp(operation, "CW") && ((magnitude - 2) % 4 == 0))
+			|| (!strcmp(operation, "CCW") && ((magnitude - 2) % 4 == 0))) {
+			
+			//Rotation CW 180 degrees or CCW 180
+			
+			sparseMatrixParameters[4] = height - 1 - bottomX;
+			sparseMatrixParameters[5] = height - 1 - topX;
+			sparseMatrixParameters[6] = width - 1 - rightY;
+			sparseMatrixParameters[7] = width - 1 - leftY;
+		}
+		else if ( (!strcmp(operation, "CW") && ((magnitude - 3) % 4 == 0))
+			|| (!strcmp(operation, "CCW") && ((magnitude - 1) % 4 == 0))) {
+			
+			//Rotation CW 270 degrees or CCW 90
+			
+			sparseMatrixParameters[4] = height - 1 - rightY;
+			sparseMatrixParameters[5] = height - 1 - leftY;
+			sparseMatrixParameters[6] = topX;
+			sparseMatrixParameters[7] = bottomX;
+		}
+		
+	} //end of rotation
+	else if (operationType == mirror) {
+
+		int topX = sparseMatrixParameters[4];
+		int bottomX = sparseMatrixParameters[5];
+		int leftY = sparseMatrixParameters[6];
+		int rightY = sparseMatrixParameters[7];
+		
+		if (!strcmp(operation, "MX")) {
+			sparseMatrixParameters[4] = height - 1 - bottomX;
+			sparseMatrixParameters[5] = height - 1 - topX;
+		}
+		else if (!strcmp(operation, "MY")) {
+			sparseMatrixParameters[6] = width - 1 - rightY;
+			sparseMatrixParameters[7] = width - 1 - leftY;
+		}
+
+	}
+
+}
+
 void implementation_driver(struct kv* sensor_values, int sensor_values_count, unsigned char * frame_buffer, unsigned int width, unsigned int height, bool grading_mode) {
 	
+	rendered_frame = allocateFrame(width, height);
+
 	int processed_frames = 0;
 
 	char* sensorKey;
@@ -794,9 +813,8 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 	int sensorValueIdx;
 
 	int lastOperation, currentOperation;
-	//printBMP(width, height, frame_buffer);
+
 	findSparseMatrix(frame_buffer, width, height);
-	//printBMP(7, 4, sparseMatrix);
 
 	netModifications[vertical].key = NULL;
 	netModifications[horizontal].key = NULL;
@@ -810,7 +828,10 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 	netModifications[mirrorx].value = 0;
 	netModifications[mirrory].value = 0;
 
-        rendered_frame = allocateFrame(width, height);
+	//Ignoring the last few instructions if not an exact multiple of 25
+	if (sensor_values_count / 25 > 1) {
+		sensor_values_count -= sensor_values_count % 25;
+	}
 
 	for(sensorValueIdx = 0; sensorValueIdx < sensor_values_count; sensorValueIdx++) {
 
@@ -818,42 +839,41 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 			lastOperation = nooperation;
 
 		sensorKey = sensor_values[sensorValueIdx].key;
-		sensorValue = sensor_values[sensorValueIdx].value;		
+		sensorValue = sensor_values[sensorValueIdx].value;	
 
 		if (!strcmp(sensorKey, "W") || !strcmp(sensorKey, "S")) {
 			currentOperation = translation;
 			
 			if(lastOperation != nooperation && currentOperation != lastOperation) {
-				//printf("Current operation Translation Vertical ");printCheck();				
+
 				//Perform rotation if any
 				if (netModifications[rotation].key != NULL) {
-
-				if (!strcmp(netModifications[rotation].key, "CW")) {
-					frame_buffer = processRotateCW(frame_buffer, width, height, 						netModifications[rotation].value);
+					updateSparseMatrixParameters(rotation, netModifications[rotation].key, netModifications[rotation].value, width, height);		
+	
+					if (!strcmp(netModifications[rotation].key, "CW")) {
+						sparseMatrix = processRotateCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
+					}
+					else {
+						sparseMatrix = processRotateCCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
+					}
+		
 					netModifications[rotation].key = NULL;
 					netModifications[rotation].value = 0;
-				}
-				else {
-					frame_buffer = processRotateCCW(frame_buffer, width, height, 						netModifications[rotation].value);
-					netModifications[rotation].key = NULL;
-					netModifications[rotation].value = 0;
-				}
 
 				}
 
 				//Perform mirrorx if any
 				if (netModifications[mirrorx].key != NULL) {
-
-					frame_buffer = processMirrorX(frame_buffer, width, height, 						netModifications[mirrorx].value);
+					updateSparseMatrixParameters(mirror, netModifications[mirrorx].key, netModifications[mirrorx].value, width, height);
+					sparseMatrix = processMirrorX(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrorx].value);
 					netModifications[mirrorx].key = NULL;
 					netModifications[mirrorx].value = 0;
-					
 				}
 
 				//Perform mirrory if any
 				if (netModifications[mirrory].key != NULL) {
-
-					frame_buffer = processMirrorY(frame_buffer, width, height, 						netModifications[mirrory].value);
+					updateSparseMatrixParameters(mirror, netModifications[mirrory].key, netModifications[mirrory].value, width, height);
+					sparseMatrix = processMirrorY(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrory].value);
 					netModifications[mirrory].key = NULL;
 					netModifications[mirrory].value = 0;
 					
@@ -870,36 +890,35 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 			currentOperation = translation;
 
 			if(lastOperation != nooperation && currentOperation != lastOperation) {
-				//printf("Current operation Translation Horizontal ");printCheck();				
+
 				//Perform rotation if any
 				if (netModifications[rotation].key != NULL) {
 
-				if (!strcmp(netModifications[rotation].key, "CW")) {
-					frame_buffer = processRotateCW(frame_buffer, width, height, 						netModifications[rotation].value);
-					netModifications[rotation].key = NULL;
-					netModifications[rotation].value = 0;
-				}
-				else {
-					frame_buffer = processRotateCCW(frame_buffer, width, height, 						netModifications[rotation].value);
-					netModifications[rotation].key = NULL;
-					netModifications[rotation].value = 0;
-				}
+					updateSparseMatrixParameters(rotation, netModifications[rotation].key, netModifications[rotation].value, width, height);
 
+					if (!strcmp(netModifications[rotation].key, "CW")) {
+						sparseMatrix = processRotateCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
+					}
+					else {
+						sparseMatrix = processRotateCCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
+					}
+
+					netModifications[rotation].key = NULL;
+					netModifications[rotation].value = 0;
 				}
 
 				//Perform mirrorx if any
 				if (netModifications[mirrorx].key != NULL) {
-
-					frame_buffer = processMirrorX(frame_buffer, width, height, 						netModifications[mirrorx].value);
+					updateSparseMatrixParameters(mirror, netModifications[mirrorx].key, netModifications[mirrorx].value, width, height);
+					sparseMatrix = processMirrorX(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrorx].value);
 					netModifications[mirrorx].key = NULL;
 					netModifications[mirrorx].value = 0;
-					
 				}
 
 				//Perform mirrory if any
 				if (netModifications[mirrory].key != NULL) {
-
-					frame_buffer = processMirrorY(frame_buffer, width, height, 						netModifications[mirrory].value);
+					updateSparseMatrixParameters(mirror, netModifications[mirrory].key, netModifications[mirrory].value, width, height);
+					sparseMatrix = processMirrorY(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrory].value);
 					netModifications[mirrory].key = NULL;
 					netModifications[mirrory].value = 0;
 					
@@ -916,43 +935,23 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 			currentOperation = rotation;
 
 			if(lastOperation != nooperation && currentOperation != lastOperation) {
-				//printf("Current operation Rotation ");printCheck();				
-
 				//Perform translation if any
 				if (netModifications[vertical].key != NULL) {
-
-				if (!strcmp(netModifications[vertical].key, "W")) {
-					frame_buffer = processMoveUp(frame_buffer, width, height, 						netModifications[vertical].value);
+					updateSparseMatrixParameters(translation, netModifications[vertical].key, netModifications[vertical].value, width, height);
 					netModifications[vertical].key = NULL;
 					netModifications[vertical].value = 0;
-				}
-				else {
-					frame_buffer = processMoveDown(frame_buffer, width, height, 						netModifications[vertical].value);
-					netModifications[vertical].key = NULL;
-					netModifications[vertical].value = 0;
-				}
-
 				}
 			
 			        if (netModifications[horizontal].key != NULL) {
-
-				if (!strcmp(netModifications[horizontal].key, "A")) {
-					frame_buffer = processMoveLeft(frame_buffer, width, height, 						netModifications[horizontal].value);
+					updateSparseMatrixParameters(translation, netModifications[horizontal].key, netModifications[horizontal].value, width, height);
 					netModifications[horizontal].key = NULL;
 					netModifications[horizontal].value = 0;
-				}
-				else {
-					frame_buffer = processMoveRight(frame_buffer, width, height, 						netModifications[horizontal].value);
-					netModifications[horizontal].key = NULL;
-					netModifications[horizontal].value = 0;
-				}
-
 				}
 
 				//Perform mirrorx if any
 				if (netModifications[mirrorx].key != NULL) {
-
-					frame_buffer = processMirrorX(frame_buffer, width, height, 						netModifications[mirrorx].value);
+					updateSparseMatrixParameters(mirror, netModifications[mirrorx].key, netModifications[mirrorx].value, width, height);
+					sparseMatrix = processMirrorX(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrorx].value);
 					netModifications[mirrorx].key = NULL;
 					netModifications[mirrorx].value = 0;
 					
@@ -960,8 +959,8 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 
 				//Perform mirrory if any
 				if (netModifications[mirrory].key != NULL) {
-
-					frame_buffer = processMirrorY(frame_buffer, width, height, 						netModifications[mirrory].value);
+					updateSparseMatrixParameters(mirror, netModifications[mirrory].key, netModifications[mirrory].value, width, height);
+					sparseMatrix = processMirrorY(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrory].value);
 					netModifications[mirrory].key = NULL;
 					netModifications[mirrory].value = 0;
 					
@@ -978,54 +977,34 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 			currentOperation = mirror;
 
 			if(lastOperation != nooperation && currentOperation != lastOperation) {
-				//printf("Current operation Mirror ");printCheck();				
+
 				//Perform translation if any
 				if (netModifications[vertical].key != NULL) {
-
-				if (!strcmp(netModifications[vertical].key, "W")) {
-					frame_buffer = processMoveUp(frame_buffer, width, height, 						netModifications[vertical].value);
+					updateSparseMatrixParameters(translation, netModifications[vertical].key, netModifications[vertical].value, width, height);
 					netModifications[vertical].key = NULL;
 					netModifications[vertical].value = 0;
-				}
-				else {
-					frame_buffer = processMoveDown(frame_buffer, width, height, 						netModifications[vertical].value);
-					netModifications[vertical].key = NULL;
-					netModifications[vertical].value = 0;
-				}
-
 				}
 			
 			        if (netModifications[horizontal].key != NULL) {
-
-				if (!strcmp(netModifications[horizontal].key, "A")) {
-					frame_buffer = processMoveLeft(frame_buffer, width, height, 						netModifications[horizontal].value);
+					updateSparseMatrixParameters(translation, netModifications[horizontal].key, netModifications[horizontal].value, width, height);
 					netModifications[horizontal].key = NULL;
 					netModifications[horizontal].value = 0;
-				}
-				else {
-					frame_buffer = processMoveRight(frame_buffer, width, height, 						netModifications[horizontal].value);
-					netModifications[horizontal].key = NULL;
-					netModifications[horizontal].value = 0;
-				}
-
 				}
 
 				//Perform rotation if any
 				if (netModifications[rotation].key != NULL) {
 
-				if (!strcmp(netModifications[rotation].key, "CW")) {
-					frame_buffer = processRotateCW(frame_buffer, width, height, 						netModifications[rotation].value);
-					netModifications[rotation].key = NULL;
-					netModifications[rotation].value = 0;
-				}
-				else {
-					frame_buffer = processRotateCCW(frame_buffer, width, height, 						netModifications[rotation].value);
-					netModifications[rotation].key = NULL;
-					netModifications[rotation].value = 0;
-				}
+					updateSparseMatrixParameters(rotation, netModifications[rotation].key, netModifications[rotation].value, width, height);
 
+					if (!strcmp(netModifications[rotation].key, "CW")) {
+						sparseMatrix = processRotateCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);	
+					}
+					else {
+						sparseMatrix = processRotateCCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
+					}
+					netModifications[rotation].key = NULL;
+					netModifications[rotation].value = 0;
 				}
-				
 
 			}
 
@@ -1042,59 +1021,41 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 
 		}
 
-		if (processed_frames % 1 == 0) {
-			//printCheck();
+		if (processed_frames % 25 == 0) {
 			//Perform translation if any
 			if (netModifications[vertical].key != NULL) {
-		
-				if (!strcmp(netModifications[vertical].key, "W")) {
-					frame_buffer = processMoveUp(frame_buffer, width, height, 						netModifications[vertical].value);
+					updateSparseMatrixParameters(translation, netModifications[vertical].key, netModifications[vertical].value, width, height);
 					netModifications[vertical].key = NULL;
 					netModifications[vertical].value = 0;
-				}
-				else {
-					frame_buffer = processMoveDown(frame_buffer, width, height, 						netModifications[vertical].value);
-					netModifications[vertical].key = NULL;
-					netModifications[vertical].value = 0;
-				}
-
 			}
 			
 			if (netModifications[horizontal].key != NULL) {
-
-				if (!strcmp(netModifications[horizontal].key, "A")) {
-					frame_buffer = processMoveLeft(frame_buffer, width, height, 						netModifications[horizontal].value);
+					updateSparseMatrixParameters(translation, netModifications[horizontal].key, netModifications[horizontal].value, width, height);
 					netModifications[horizontal].key = NULL;
 					netModifications[horizontal].value = 0;
-				}
-				else {
-					frame_buffer = processMoveRight(frame_buffer, width, height, 						netModifications[horizontal].value);
-					netModifications[horizontal].key = NULL;
-					netModifications[horizontal].value = 0;
-				}
-
 			}
 
 			//Perform rotation if any
 			if (netModifications[rotation].key != NULL) {
+			
+				updateSparseMatrixParameters(rotation, netModifications[rotation].key, netModifications[rotation].value, width, height);
 
 				if (!strcmp(netModifications[rotation].key, "CW")) {
-					frame_buffer = processRotateCW(frame_buffer, width, height, 						netModifications[rotation].value);
-					netModifications[rotation].key = NULL;
-					netModifications[rotation].value = 0;
+					sparseMatrix = processRotateCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
 				}
 				else {
-					frame_buffer = processRotateCCW(frame_buffer, width, height, 						netModifications[rotation].value);
-					netModifications[rotation].key = NULL;
-					netModifications[rotation].value = 0;
+					sparseMatrix = processRotateCCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
 				}
+
+				netModifications[rotation].key = NULL;
+				netModifications[rotation].value = 0;
 
 			}
 
 			//Perform mirrorx if any
 			if (netModifications[mirrorx].key != NULL) {
-
-				frame_buffer = processMirrorX(frame_buffer, width, height, 						netModifications[mirrorx].value);
+				updateSparseMatrixParameters(mirror, netModifications[mirrorx].key, netModifications[mirrorx].value, width, height);
+					sparseMatrix = processMirrorX(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrorx].value);
 				netModifications[mirrorx].key = NULL;
 				netModifications[mirrorx].value = 0;
 					
@@ -1102,13 +1063,22 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 
 			//Perform mirrory if any
 			if (netModifications[mirrory].key != NULL) {
-
-				frame_buffer = processMirrorY(frame_buffer, width, height, 						netModifications[mirrory].value);
+				updateSparseMatrixParameters(mirror, netModifications[mirrory].key, netModifications[mirrory].value, width, height);
+					sparseMatrix = processMirrorY(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrory].value);
 				netModifications[mirrory].key = NULL;
 				netModifications[mirrory].value = 0;
 					
 			}
 			
+			frame_buffer = drawSparseMatrixInImage (frame_buffer, width, height);
+
+			sparseMatrixParameters[0] = sparseMatrixParameters[4];
+			sparseMatrixParameters[1] = sparseMatrixParameters[5];
+			sparseMatrixParameters[2] = sparseMatrixParameters[6];
+			sparseMatrixParameters[3] = sparseMatrixParameters[7];
+			sparseMatrixParameters[10] = sparseMatrixParameters[8];
+			sparseMatrixParameters[11] = sparseMatrixParameters[9];
+
 			verifyFrame(frame_buffer, width, height, grading_mode);
 		}
 
