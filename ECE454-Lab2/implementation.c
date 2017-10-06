@@ -5,8 +5,15 @@
 #include "implementation_reference.h"   // DO NOT REMOVE this line
 #include "implementation.h"
 
+//Array that keeps track of net effects of instructions
 struct kv netModifications[5];
+
+//Array that stores 25 instructions after optimized reordering
 struct kv simplifiedInstructions[25];
+
+//Counts the number of MX and MY instructions (per 25 cycles)
+int numMX = 0;
+int numMY = 0;
 
 #define vertical 0
 #define horizontal 1
@@ -18,8 +25,10 @@ struct kv simplifiedInstructions[25];
 #define mirror 6
 #define nooperation 7
 
+//Temporary buffer
 unsigned char* rendered_frame;
-unsigned char* rendered_frame_sparse_matrix;
+
+//Array that holds the tightest bound object in the square input image
 unsigned char* sparseMatrix;
 	
 int sparseMatrixParameters[12];
@@ -38,220 +47,11 @@ int sparseMatrixParameters[12];
 */
 
 // Declariations
-unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsigned height, int offset);
-unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsigned height, int offset);
-unsigned char *processMoveDown(unsigned char *buffer_frame, unsigned width, unsigned height, int offset);
-unsigned char *processMoveRight(unsigned char *buffer_frame, unsigned width, unsigned height, int offset);
 unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsigned height,
                                         int rotate_iteration);
 unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, unsigned height,
                                         int rotate_iteration);
 
-/***********************************************************************************************************************
- * @param buffer_frame - pointer pointing to a buffer storing the imported 24-bit bitmap image
- * @param width - width of the imported 24-bit bitmap image
- * @param height - height of the imported 24-bit bitmap image
- * @param offset - number of pixels to shift the object in bitmap image up
- * @return - pointer pointing a buffer storing a modified 24-bit bitmap image
- * Note1: White pixels RGB(255,255,255) are treated as background. Object in the image refers to non-white pixels.
- * Note2: You can assume the object will never be moved off the screen
- **********************************************************************************************************************/
-unsigned char *processMoveUp(unsigned char *buffer_frame, unsigned width, unsigned height, int offset) {
-
-    // handle negative offsets
-    if (offset < 0){
-        return processMoveDown(buffer_frame, width, height, offset * -1);
-    }
-
-
-    /****************** MEMCPY VERSION ********************/
-    unsigned char *sourcePtr, *destPtr, *tempPtr;
-    // store shifted pixels to temporary buffer
-    //printf("buffer address: %p, %p\n", buffer_frame, tempPtr);
-    for (int row = 0; row < (height - offset); row++)
-    {
-	    destPtr = buffer_frame + (row*width*3);
-  	    sourcePtr = destPtr + (offset*width*3);
-  	    memcpy(destPtr, sourcePtr, width*3);
-    }
-
-    // fill left over pixels with white pixels
-    for (int row = (height - offset); row < height; row++) {
-        for (int column = 0; column < width; column++) {
-            int position_rendered_frame = row * width * 3 + column * 3;
-            buffer_frame[position_rendered_frame] = 255;
-            buffer_frame[position_rendered_frame + 1] = 255;
-            buffer_frame[position_rendered_frame + 2] = 255;
-        }
-    }
-
-    // copy the temporary buffer back to original frame buffer
-    //buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
-
-    // return a pointer to the updated image buffer
-    return buffer_frame;
-
-}
-
-/***********************************************************************************************************************
- * @param buffer_frame - pointer pointing to a buffer storing the imported 24-bit bitmap image
- * @param width - width of the imported 24-bit bitmap image
- * @param height - height of the imported 24-bit bitmap image
- * @param offset - number of pixels to shift the object in bitmap image left
- * @return - pointer pointing a buffer storing a modified 24-bit bitmap image
- * Note1: White pixels RGB(255,255,255) are treated as background. Object in the image refers to non-white pixels.
- * Note2: You can assume the object will never be moved off the screen
- **********************************************************************************************************************/
-unsigned char *processMoveRight(unsigned char *buffer_frame, unsigned width, unsigned height, int offset) {
-     
-    // handle negative offsets
-    if (offset < 0){
-        return processMoveLeft(buffer_frame, width, height, offset * -1);
-    }
-
-    // store shifted pixels to temporary buffer
-    for (int row = 0; row < height; row++) {
-        for (int column = width - 1; column >= offset; column--) {
-            int position_rendered_frame = row * width * 3 + column * 3;
-            int position_buffer_frame = row * width * 3 + (column - offset) * 3;
-            buffer_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
-            buffer_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
-            buffer_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
-        }
-    }
-
-    // fill left over pixels with white pixels
-    for (int row = 0; row < height; row++) {
-        for (int column = 0; column < offset; column++) {
-            int position_rendered_frame = row * width * 3 + column * 3;
-            buffer_frame[position_rendered_frame] = 255;
-            buffer_frame[position_rendered_frame + 1] = 255;
-            buffer_frame[position_rendered_frame + 2] = 255;
-        }
-    }
-
-    // copy the temporary buffer back to original frame buffer
-    //buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
-
-    // return a pointer to the updated image buffer
-    return buffer_frame;
-
-}
-
-/***********************************************************************************************************************
- * @param buffer_frame - pointer pointing to a buffer storing the imported 24-bit bitmap image
- * @param width - width of the imported 24-bit bitmap image
- * @param height - height of the imported 24-bit bitmap image
- * @param offset - number of pixels to shift the object in bitmap image up
- * @return - pointer pointing a buffer storing a modified 24-bit bitmap image
- * Note1: White pixels RGB(255,255,255) are treated as background. Object in the image refers to non-white pixels.
- * Note2: You can assume the object will never be moved off the screen
- **********************************************************************************************************************/
-unsigned char *processMoveDown(unsigned char *buffer_frame, unsigned width, unsigned height, int offset) {
-
-    // handle negative offsets
-    if (offset < 0){
-        return processMoveUp(buffer_frame, width, height, offset * -1);
-    }
-
-    unsigned char *sourcePtr, *destPtr, *tempPtr;
-    
-    for (int row = height - 1; row >= offset; row--) {
-
-	    sourcePtr = buffer_frame + ((row - offset) * width * 3);
-	    destPtr = buffer_frame + (row * width * 3);
-	    memcpy(destPtr,sourcePtr, width*3);
-    }
-    
- 
-    /***************************************************** 
-    // Older version: store shifted pixels to temporary buffer
-    for (int row = height - 1; row >= offset; row--) {
-        for (int column = 0; column < width; column++) {
-            int position_rendered_frame = row * width * 3 + column * 3;
-            int position_buffer_frame = (row - offset) * width * 3 + column * 3;
-            buffer_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
-            buffer_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
-            buffer_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
-        }
-    }
-    /*****************************************************/
-
-    // fill left over pixels with white pixels
-    for (int row = 0; row < offset; row++) {
-        for (int column = 0; column < width; column++) {
-            int position_rendered_frame = row * width * 3 + column * 3;
-            buffer_frame[position_rendered_frame] = 255;
-            buffer_frame[position_rendered_frame + 1] = 255;
-            buffer_frame[position_rendered_frame + 2] = 255;
-        }
-    }
-
-    // copy the temporary buffer back to original frame buffer
-    //buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
-
-    // return a pointer to the updated image buffer
-    return buffer_frame;
-
-}
-
-/***********************************************************************************************************************
- * @param buffer_frame - pointer pointing to a buffer storing the imported 24-bit bitmap image
- * @param width - width of the imported 24-bit bitmap image
- * @param height - height of the imported 24-bit bitmap image
- * @param offset - number of pixels to shift the object in bitmap image right
- * @return - pointer pointing a buffer storing a modified 24-bit bitmap image
- * Note1: White pixels RGB(255,255,255) are treated as background. Object in the image refers to non-white pixels.
- * Note2: You can assume the object will never be moved off the screen
- **********************************************************************************************************************/
-unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsigned height, int offset) {
-
-    // handle negative offsets
-    if (offset < 0){
-        return processMoveRight(buffer_frame, width, height, offset * -1);
-    }
-
-    // Implementing memcpy version, currently not working
-    /*unsigned char *sourcePtr, *destPtr, *tempPtr;
-
-    for (int row = 0; row < height; row++) {
-	    //printf("Source Ptr: %p\n",sourcePtr);
-	    //printf("Dest Ptr: %p\n",destPtr);
-  	    sourcePtr = buffer_frame + (row * width * 3) + offset;
-	    destPtr = buffer_frame + (row * width * 3);
-            memcpy(destPtr,sourcePtr,((width - offset - 1) * 3));
-       
-    }*/
-
-
-    // Original: store shifted pixels to temporary buffer
-    for (int row = 0; row < height; row++) {
-        for (int column = 0; column < (width - offset); column++) {
-            int position_rendered_frame = row * width * 3 + column * 3;
-            int position_buffer_frame = row * width * 3 + (column + offset) * 3;
-            buffer_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
-            buffer_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
-            buffer_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
-        }
-    }
-
-    // fill left over pixels with white pixels
-    for (int row = 0; row < height; row++) {
-        for (int column = width - offset; column < width; column++) {
-            int position_rendered_frame = row * width * 3 + column * 3;
-            buffer_frame[position_rendered_frame] = 255;
-            buffer_frame[position_rendered_frame + 1] = 255;
-            buffer_frame[position_rendered_frame + 2] = 255;
-        }
-    }
-
-    // copy the temporary buffer back to original frame buffer
-    //buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
-
-    // return a pointer to the updated image buffer
-    return buffer_frame;
-
-}
 
 /***********************************************************************************************************************
  * @param buffer_frame - pointer pointing to a buffer storing the imported 24-bit bitmap image
@@ -262,7 +62,7 @@ unsigned char *processMoveLeft(unsigned char *buffer_frame, unsigned width, unsi
  * Note: You can assume the frame will always be square and you will be rotating the entire image
  **********************************************************************************************************************/
 unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsigned height, int rotate_iteration) {
-	
+
     // handle negative offsets
     if (rotate_iteration < 0){
         return processRotateCCW(buffer_frame, width, height, rotate_iteration * -1);
@@ -298,8 +98,12 @@ unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsi
             render_column = width - 1;
         }
 
+	unsigned char *sourcePtr, *destPtr;
+
         // copy the temporary buffer back to original frame buffer
-        buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
+	sourcePtr = rendered_frame;
+	destPtr = buffer_frame;
+	memcpy(destPtr, sourcePtr, width * height * 3);
 
     	// return a pointer to the updated image buffer
     	return buffer_frame;
@@ -328,8 +132,12 @@ unsigned char *processRotateCW(unsigned char *buffer_frame, unsigned width, unsi
             render_column = height-1;
         }
 
+	unsigned char *sourcePtr, *destPtr;
+
         // copy the temporary buffer back to original frame buffer
-        buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
+	sourcePtr = rendered_frame;
+	destPtr = buffer_frame;
+	memcpy(destPtr, sourcePtr, width * height * 3);
 	
     //Only do this for sparse matrix
     sparseMatrixParameters[8] = newWidth;
@@ -386,8 +194,12 @@ unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, uns
             render_column = width - 1;
         }
 
+	unsigned char *sourcePtr, *destPtr;
+
         // copy the temporary buffer back to original frame buffer
-        buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
+	sourcePtr = rendered_frame;
+	destPtr = buffer_frame;
+	memcpy(destPtr, sourcePtr, width * height * 3);
 
     	// return a pointer to the updated image buffer
     	return buffer_frame;
@@ -413,8 +225,12 @@ unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, uns
             render_column = 0;
         }
 
+	unsigned char *sourcePtr, *destPtr;
+
         // copy the temporary buffer back to original frame buffer
-        buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
+	sourcePtr = rendered_frame;
+	destPtr = buffer_frame;
+	memcpy(destPtr, sourcePtr, width * height * 3);
 
     //Only do this for sparse matrix
     sparseMatrixParameters[8] = newWidth;
@@ -434,19 +250,17 @@ unsigned char *processRotateCCW(unsigned char *buffer_frame, unsigned width, uns
  **********************************************************************************************************************/
 unsigned char *processMirrorX(unsigned char *buffer_frame, unsigned int width, unsigned int height, int _unused) {
 
-    // store shifted pixels to temporary buffer
-    for (int row = 0; row < height; row++) {
-        for (int column = 0; column < width; column++) {
-            int position_rendered_frame = row * width * 3 + column * 3;
-            int position_buffer_frame = (height - row - 1) * width * 3 + column * 3;
-            rendered_frame[position_rendered_frame] = buffer_frame[position_buffer_frame];
-            rendered_frame[position_rendered_frame + 1] = buffer_frame[position_buffer_frame + 1];
-            rendered_frame[position_rendered_frame + 2] = buffer_frame[position_buffer_frame + 2];
-        }
-    }
+    unsigned char *ptrOne, *ptrTwo;
 
-    // copy the temporary buffer back to original frame buffer
-    buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
+    // store shifted pixels to temporary buffer
+    for (int row = 0; row < height/2; row++) {
+	    ptrOne = buffer_frame + (row * width * 3);
+	    ptrTwo = buffer_frame + (height - row - 1) * width * 3;
+
+	    memcpy(rendered_frame, ptrOne, width * 3);
+	    memcpy(ptrOne, ptrTwo, width * 3);
+	    memcpy(ptrTwo, rendered_frame, width * 3);
+    }
 
     // return a pointer to the updated image buffer
     return buffer_frame;
@@ -473,8 +287,11 @@ unsigned char *processMirrorY(unsigned char *buffer_frame, unsigned width, unsig
         }
     }
 
-    // copy the temporary buffer back to original frame buffer
-    buffer_frame = copyFrame(rendered_frame, buffer_frame, width, height);
+    unsigned char* sourcePtr, *destPtr;
+
+    sourcePtr = rendered_frame;
+    destPtr = buffer_frame;
+    memcpy(destPtr, sourcePtr, width * height * 3);
 
     // return a pointer to the updated image buffer
     return buffer_frame;
@@ -486,18 +303,18 @@ unsigned char *processMirrorY(unsigned char *buffer_frame, unsigned width, unsig
  **********************************************************************************************************************/
 void print_team_info(){
     // Please modify this field with something interesting
-    char team_name[] = "default-name";
+    char team_name[] = "LOTR";
 
     // Please fill in your information
-    char student1_first_name[] = "john";
-    char student1_last_name[] = "doe";
-    char student1_student_number[] = "0000000000";
+    char student1_first_name[] = "Sagnik";
+    char student1_last_name[] = "Roy";
+    char student1_student_number[] = "1000338235";
 
     // Please fill in your partner's information
     // If yon't have partner, do not modify this
-    char student2_first_name[] = "joe";
-    char student2_last_name[] = "doe";
-    char student2_student_number[] = "0000000001";
+    char student2_first_name[] = "Shamitra";
+    char student2_last_name[] = "Rohan";
+    char student2_student_number[] = "1000862989";
 
     // Printing out team information
     printf("*******************************************************************************************************\n");
@@ -511,39 +328,12 @@ void print_team_info(){
     printf("\tstudent2_student_number: %s\n", student2_student_number);
 }
 
+//All values coming into this function are +ve, don't need to check for -ve values
 void updateNetModification(struct kv* netModification, struct kv* currentObject) {
 	
 	if (netModification->key == NULL) {
-
-		if (currentObject-> value > 0) {
-			netModification->key = currentObject->key;
-			netModification->value = currentObject->value;
-		}
-		else {
-			netModification->value = currentObject->value * -1;
-
-			if (!strcmp(currentObject->key, "W"))
-				netModification->key = "S";
-			else if (!strcmp(currentObject->key, "S"))
-				netModification->key = "W";
-			else if (!strcmp(currentObject->key, "A"))
-				netModification->key = "D";
-			else if (!strcmp(currentObject->key, "D"))
-				netModification->key = "A";
-			else if (!strcmp(currentObject->key, "CW"))
-				netModification->key = "CCW";
-			else if (!strcmp(currentObject->key, "CCW"))
-				netModification->key = "CW";
-			else if (!strcmp(currentObject->key, "MX")) {
-				netModification->key = "MX";
-				netModification->value = 1;			
-			}
-			else if (!strcmp(currentObject->key, "MY")) {
-				netModification->key = "MY";
-				netModification->value = 1;			
-			}
-		}
-		
+		netModification->key = currentObject->key;
+		netModification->value = currentObject->value;
 		return;
 	}
 
@@ -615,6 +405,10 @@ void printCheck() {
 
 }
 
+
+/* Function that finds the smaller image in the big image 
+   Smaller image gets stored in sparseMatrix and it's parameters 
+   gets stored in sparseMatrixParameters*/
 void findSparseMatrix (unsigned char * frame_buffer, int width, int height)
 {
 	int row, column;
@@ -670,20 +464,18 @@ void findSparseMatrix (unsigned char * frame_buffer, int width, int height)
 	//Don't forget to deallocate after use!
 	sparseMatrix = allocateFrame(sparseWidth, sparseHeight);
 
+	unsigned char *sourcePtr, *destPtr;
+
 	for (row = topX; row <= bottomX; row++) {
-		for (column = leftY; column <= rightY; column++) {
-
-			int sourceIndex = row * width * 3 + column * 3;
-			int destIndex = ((row - topX) * sparseWidth * 3) + ((column - leftY) * 3);
-
-			sparseMatrix[destIndex] = frame_buffer[sourceIndex];
-			sparseMatrix[destIndex + 1] = frame_buffer[sourceIndex + 1];
-			sparseMatrix[destIndex + 2] = frame_buffer[sourceIndex + 2];
-		}
+		sourcePtr = frame_buffer + (row * width * 3) + (leftY * 3);
+		destPtr = sparseMatrix + ((row - topX) * sparseWidth * 3);
+		memcpy(destPtr,sourcePtr, sparseWidth * 3);
 	}
 
 }
 
+/* Function that is called at every 25th instruction. This draws the sparse image at the appropriate 
+   location in the bigger image*/
 unsigned char* drawSparseMatrixInImage (unsigned char* frame_buffer, int width, int height) {
 
 	/*Done in two for loops as of now to deal with the event in which
@@ -692,13 +484,9 @@ unsigned char* drawSparseMatrixInImage (unsigned char* frame_buffer, int width, 
 	*/
 
 	int originalTopX = sparseMatrixParameters[0];
-	int originalBottomX = sparseMatrixParameters[1];
 	int originalLeftY = sparseMatrixParameters[2];
-	int originalRightY = sparseMatrixParameters[3];
 	int newTopX = sparseMatrixParameters[4];
-	int newBottomX = sparseMatrixParameters[5];
 	int newLeftY = sparseMatrixParameters[6];
-	int newRightY = sparseMatrixParameters[7];	
 	int newSparseWidth = sparseMatrixParameters[8];
 	int newSparseHeight = sparseMatrixParameters[9];
 	int originalSparseWidth = sparseMatrixParameters[10];
@@ -722,6 +510,8 @@ unsigned char* drawSparseMatrixInImage (unsigned char* frame_buffer, int width, 
 	
 }
 
+/* This function updates the parameters (topx,bottomx etc) of the sparse image 
+   for translation, rotation and mirror operations*/
 void updateSparseMatrixParameters(int operationType, char* operation, int magnitude, int width, int height) {
 
 	if (operationType == translation) {
@@ -800,11 +590,463 @@ void updateSparseMatrixParameters(int operationType, char* operation, int magnit
 
 	}
 
+	/*printf("\n Old Parameters \nOld TopX: %d Old BottomX: %d Old LeftY: %d Old RightY: %d Old Width: %d Old Height: %d\n",
+	sparseMatrixParameters[0],sparseMatrixParameters[1],sparseMatrixParameters[2],sparseMatrixParameters[3],sparseMatrixParameters[10],sparseMatrixParameters[11]);
+
+ 	printf("New Parameters\nNew TopX: %d New BottomX: %d New LeftY: %d New RightY: %d New Width: %d New Height: %d\n\n",
+	sparseMatrixParameters[4],sparseMatrixParameters[5],sparseMatrixParameters[6],sparseMatrixParameters[7],sparseMatrixParameters[8],sparseMatrixParameters[9]);*/
+
 }
 
-void implementation_driver(struct kv* sensor_values, int sensor_values_count, unsigned char * frame_buffer, unsigned int width, unsigned int height, bool grading_mode) {
+/* New algorithm to reorder every set of 25 instructions
+   Instructions are reordered such that translations appear first,
+   followed by rotations, followed by mirrorx, followed by mirrory*/
+void updateSimplifiedInstructionsArray(struct kv* sensor_values, int startIndex) {
+
+	int endIndex = startIndex + 25;
+	numMX = 0;
+	numMY = 0;
+
+	for(int sensorValueIdx = startIndex; sensorValueIdx < endIndex; sensorValueIdx++) {
+
+		char* sensorKey = sensor_values[sensorValueIdx].key;
+		int sensorValue = sensor_values[sensorValueIdx].value;
+		
+		if (!strcmp(sensorKey, "MX")) 
+			numMX++;
+		else if (!strcmp(sensorKey, "MY")) 
+			numMY++;
+
+		if (sensorValue < 0) {
+			
+			sensorValue = sensorValue * -1;
+			simplifiedInstructions[sensorValueIdx - startIndex].value = sensorValue;
+
+			if (!strcmp(sensorKey, "W")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "S";
+			}
+			else if (!strcmp(sensorKey, "S")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "W";
+			}
+			else if (!strcmp(sensorKey, "A")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "D";
+			}
+			else if (!strcmp(sensorKey, "D")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "A";
+			}
+			else if (!strcmp(sensorKey, "CW")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "CCW";
+
+				if ((sensorValue - 1) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 1;
+				else if ((sensorValue - 2) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 2;
+				else if ((sensorValue - 3) % 4 == 0) {
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 1;
+					simplifiedInstructions[sensorValueIdx - startIndex].key = "CW";
+				}
+				else if ((sensorValue) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 4;
+			}
+			else if (!strcmp(sensorKey, "CCW")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "CW";
+
+				if ((sensorValue - 1) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 1;
+				else if ((sensorValue - 2) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 2;
+				else if ((sensorValue - 3) % 4 == 0) {
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 1;
+					simplifiedInstructions[sensorValueIdx - startIndex].key = "CCW";
+				}
+				else if ((sensorValue) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 4;
+			}
+			else if (!strcmp(sensorKey, "MX")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "MX";
+				simplifiedInstructions[sensorValueIdx - startIndex].value = 1;	
+			}
+			else if (!strcmp(sensorKey, "MY")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "MY";
+				simplifiedInstructions[sensorValueIdx - startIndex].value = 1;			
+			}
+		}
+		else {
+
+			if (!strcmp(sensorKey, "CW")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "CW";
+				
+				if ((sensorValue - 1) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 1;
+				else if ((sensorValue - 2) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 2;
+				else if ((sensorValue - 3) % 4 == 0) {
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 1;
+					simplifiedInstructions[sensorValueIdx - startIndex].key = "CCW";
+				}
+				else if ((sensorValue) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 4;
+			}
+			else if (!strcmp(sensorKey, "CCW")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "CCW";
+				
+				if ((sensorValue - 1) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 1;
+				else if ((sensorValue - 2) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 2;
+				else if ((sensorValue - 3) % 4 == 0) {
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 1;
+					simplifiedInstructions[sensorValueIdx - startIndex].key = "CW";
+				}
+				else if ((sensorValue) % 4 == 0) 
+					simplifiedInstructions[sensorValueIdx - startIndex].value = 4;
+			}
+			else if (!strcmp(sensorKey, "MX")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "MX";
+				simplifiedInstructions[sensorValueIdx - startIndex].value = 1;	
+			}
+			else if (!strcmp(sensorKey, "MY")) {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = "MY";
+				simplifiedInstructions[sensorValueIdx - startIndex].value = 1;	
+			}
+			else {
+				simplifiedInstructions[sensorValueIdx - startIndex].key = sensorKey;
+				simplifiedInstructions[sensorValueIdx - startIndex].value = sensorValue;
+			}
+		}
+		
+	}
+
+	int numChanges = 0;
 	
-	rendered_frame = allocateFrame(width, height);
+	do {
+		numChanges = 0;
+
+		for(int i = 0; i < 24; i++) {
+			char * firstInstruction = simplifiedInstructions[i].key;
+			char * secondInstruction =  simplifiedInstructions[i+1].key;
+			int firstInstructionValue = simplifiedInstructions[i].value;
+			int secondInstructionValue = simplifiedInstructions[i+1].value;
+			int swapValue;		
+
+			if (!strcmp(firstInstruction, "CW") || !strcmp(firstInstruction, "CCW")) {
+
+				if (!strcmp(firstInstruction, "CW") && (firstInstructionValue == 1)) {
+					if (!strcmp(secondInstruction, "W")) {
+						simplifiedInstructions[i].key = "A";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "S")) {
+						simplifiedInstructions[i].key = "D";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "A")) {
+						simplifiedInstructions[i].key = "S";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "D")) {
+						simplifiedInstructions[i].key = "W";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+				}
+				else if ((!strcmp(firstInstruction, "CW") || !strcmp(firstInstruction, "CCW")) && (firstInstructionValue == 2)) {
+					if (!strcmp(secondInstruction, "W")) {
+						simplifiedInstructions[i].key = "S";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "S")) {
+						simplifiedInstructions[i].key = "W";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "A")) {
+						simplifiedInstructions[i].key = "D";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "D")) {
+						simplifiedInstructions[i].key = "A";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+				}
+				else if ((!strcmp(firstInstruction, "CW") || !strcmp(firstInstruction, "CCW")) && (firstInstructionValue == 4)) {
+					if (!strcmp(secondInstruction, "W")) {
+						simplifiedInstructions[i].key = "W";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "S")) {
+						simplifiedInstructions[i].key = "S";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "A")) {
+						simplifiedInstructions[i].key = "A";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "D")) {
+						simplifiedInstructions[i].key = "D";
+						simplifiedInstructions[i+1].key = "CW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+				}
+				else if (!strcmp(firstInstruction, "CCW") && firstInstructionValue == 1) {
+					if (!strcmp(secondInstruction, "W")) {
+						simplifiedInstructions[i].key = "D";
+						simplifiedInstructions[i+1].key = "CCW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "S")) {
+						simplifiedInstructions[i].key = "A";
+						simplifiedInstructions[i+1].key = "CCW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "A")) {
+						simplifiedInstructions[i].key = "W";
+						simplifiedInstructions[i+1].key = "CCW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+					else if (!strcmp(secondInstruction, "D")) {
+						simplifiedInstructions[i].key = "S";
+						simplifiedInstructions[i+1].key = "CCW";
+						swapValue = simplifiedInstructions[i].value;
+						simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+						simplifiedInstructions[i+1].value = swapValue;
+						numChanges++;
+					}
+
+				}
+				
+			}
+			else if (!strcmp(firstInstruction, "MX")) {
+				
+				if (!strcmp(secondInstruction, "W")) {
+					simplifiedInstructions[i].key = "S";
+					simplifiedInstructions[i+1].key = "MX";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction, "S")) {
+					simplifiedInstructions[i].key = "W";
+					simplifiedInstructions[i+1].key = "MX";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction, "A")) {
+					simplifiedInstructions[i].key = "A";
+					simplifiedInstructions[i+1].key = "MX";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction, "D")) {
+					simplifiedInstructions[i].key = "D";
+					simplifiedInstructions[i+1].key = "MX";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction, "CW")) {
+					simplifiedInstructions[i].key = "CCW";
+					simplifiedInstructions[i+1].key = "MX";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction,"CCW")) {
+					simplifiedInstructions[i].key = "CW";
+					simplifiedInstructions[i+1].key = "MX";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+			}	
+			else if (!strcmp(firstInstruction, "MY")) {
+				
+				if (!strcmp(secondInstruction, "W")) {
+					simplifiedInstructions[i].key = "W";
+					simplifiedInstructions[i+1].key = "MY";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction, "S")) {
+					simplifiedInstructions[i].key = "S";
+					simplifiedInstructions[i+1].key = "MY";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction, "A")) {
+					simplifiedInstructions[i].key = "D";
+					simplifiedInstructions[i+1].key = "MY";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction, "D")) {
+					simplifiedInstructions[i].key = "A";
+					simplifiedInstructions[i+1].key = "MY";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction, "CW")) {
+					simplifiedInstructions[i].key = "CCW";
+					simplifiedInstructions[i+1].key = "MY";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction,"CCW")) {
+					simplifiedInstructions[i].key = "CW";
+					simplifiedInstructions[i+1].key = "MY";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+				else if (!strcmp(secondInstruction, "MX")) {
+					simplifiedInstructions[i].key = "MX";
+					simplifiedInstructions[i+1].key = "MY";
+					swapValue = simplifiedInstructions[i].value;
+					simplifiedInstructions[i].value = simplifiedInstructions[i+1].value;
+					simplifiedInstructions[i+1].value = swapValue;
+					numChanges++;
+				}
+			}
+			
+		}
+
+	} while(numChanges != 0);
+
+	struct kv tempStructure;
+
+	if (numMX % 2 == 0) {
+		tempStructure.key = NULL;
+		tempStructure.value = 0;
+	}
+	else {
+		tempStructure.key = "MX";
+		tempStructure.value = 1;
+	}
+
+	updateNetModification(&netModifications[mirrorx], &tempStructure);
+	
+	if (numMY % 2 == 0) {
+		tempStructure.key = NULL;
+		tempStructure.value = 0;
+	}
+	else {
+		tempStructure.key = "MY";
+		tempStructure.value = 1;
+	}
+
+	updateNetModification(&netModifications[mirrory], &tempStructure);
+
+	/*printf("New Sensor Values are:\n");
+	
+	for(int i = 0; i < 25; i++) {
+
+		if (!strcmp(simplifiedInstructions[i].key,"W")) 
+			printf("Key: W Value: %d\n",simplifiedInstructions[i].value);
+		else if (!strcmp(simplifiedInstructions[i].key,"S")) 
+			printf("Key: S Value: %d\n",simplifiedInstructions[i].value);
+		else if (!strcmp(simplifiedInstructions[i].key,"A")) 
+			printf("Key: A Value: %d\n",simplifiedInstructions[i].value);
+		else if (!strcmp(simplifiedInstructions[i].key,"D")) 
+			printf("Key: D Value: %d\n",simplifiedInstructions[i].value);
+		else if (!strcmp(simplifiedInstructions[i].key,"CW")) 
+			printf("Key: CW Value: %d\n",simplifiedInstructions[i].value);
+		else if (!strcmp(simplifiedInstructions[i].key,"CCW")) 
+			printf("Key: CCW Value: %d\n",simplifiedInstructions[i].value);
+		else if (!strcmp(simplifiedInstructions[i].key,"MX")) 
+			printf("Key: MX Value: %d\n",simplifiedInstructions[i].value);
+		else if (!strcmp(simplifiedInstructions[i].key,"MY")) 
+			printf("Key: MY Value: %d\n",simplifiedInstructions[i].value);
+	}
+
+	printf("-----------\n");*/
+
+}
+
+/* Working of this function: this function takes 25 instructions at a time and calls 
+   updateSimplifiedInstructionsArray() to reorder them such that translations occur first 
+   followed by rotations, mirrorx and mirrory. 
+
+   Then it goes through these 25 instructions one by one. Since they are grouped now, it is much
+   faster to calculate the net operation to be applied to the image.
+
+   Note: Consider the first rotation instruction encountered (within 25 instructions). We can be sure
+   that we have come across ONLY translations so far. Hence, we only need to perform the net translation
+   and continue on.   
+*/
+void implementation_driver(struct kv* sensor_values, int sensor_values_count, unsigned char * frame_buffer, unsigned int width, unsigned int height, bool grading_mode) {
 
 	int processed_frames = 0;
 
@@ -815,6 +1057,7 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 	int lastOperation, currentOperation;
 
 	findSparseMatrix(frame_buffer, width, height);
+	rendered_frame = allocateFrame(sparseMatrixParameters[10], sparseMatrixParameters[11]);
 
 	netModifications[vertical].key = NULL;
 	netModifications[horizontal].key = NULL;
@@ -833,100 +1076,46 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 		sensor_values_count -= sensor_values_count % 25;
 	}
 
-	for(sensorValueIdx = 0; sensorValueIdx < sensor_values_count; sensorValueIdx++) {
+	int numIterations = sensor_values_count/25;
+
+	for (int i = 0; i < numIterations; i++) {
+		updateSimplifiedInstructionsArray(sensor_values, i*25);
+
+	for(sensorValueIdx = 0; sensorValueIdx < 25; sensorValueIdx++) {
 
 		if(sensorValueIdx == 0)
 			lastOperation = nooperation;
 
-		sensorKey = sensor_values[sensorValueIdx].key;
-		sensorValue = sensor_values[sensorValueIdx].value;	
+		sensorKey = simplifiedInstructions[sensorValueIdx].key;
+		sensorValue = simplifiedInstructions[sensorValueIdx].value;	
+
+		/*if (!strcmp(sensorKey,"W")) 
+			printf("Key: W Value: %d\n",sensorValue);
+		else if (!strcmp(sensorKey,"S")) 
+			printf("Key: S Value: %d\n",sensorValue);
+		else if (!strcmp(sensorKey,"A")) 
+			printf("Key: A Value: %d\n",sensorValue);
+		else if (!strcmp(sensorKey,"D")) 
+			printf("Key: D Value: %d\n",sensorValue);
+		else if (!strcmp(sensorKey,"CW")) 
+			printf("Key: CW Value: %d\n",sensorValue);
+		else if (!strcmp(sensorKey,"CCW")) 
+			printf("Key: CCW Value: %d\n",sensorValue);
+		else if (!strcmp(sensorKey,"MX")) 
+			printf("Key: MX Value: %d\n",sensorValue);
+		else if (!strcmp(sensorKey,"MY")) 
+			printf("Key: MY Value: %d\n",sensorValue);*/
 
 		if (!strcmp(sensorKey, "W") || !strcmp(sensorKey, "S")) {
 			currentOperation = translation;
-			
-			if(lastOperation != nooperation && currentOperation != lastOperation) {
-
-				//Perform rotation if any
-				if (netModifications[rotation].key != NULL) {
-					updateSparseMatrixParameters(rotation, netModifications[rotation].key, netModifications[rotation].value, width, height);		
-	
-					if (!strcmp(netModifications[rotation].key, "CW")) {
-						sparseMatrix = processRotateCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
-					}
-					else {
-						sparseMatrix = processRotateCCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
-					}
-		
-					netModifications[rotation].key = NULL;
-					netModifications[rotation].value = 0;
-
-				}
-
-				//Perform mirrorx if any
-				if (netModifications[mirrorx].key != NULL) {
-					updateSparseMatrixParameters(mirror, netModifications[mirrorx].key, netModifications[mirrorx].value, width, height);
-					sparseMatrix = processMirrorX(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrorx].value);
-					netModifications[mirrorx].key = NULL;
-					netModifications[mirrorx].value = 0;
-				}
-
-				//Perform mirrory if any
-				if (netModifications[mirrory].key != NULL) {
-					updateSparseMatrixParameters(mirror, netModifications[mirrory].key, netModifications[mirrory].value, width, height);
-					sparseMatrix = processMirrorY(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrory].value);
-					netModifications[mirrory].key = NULL;
-					netModifications[mirrory].value = 0;
-					
-				}
-
-			}
-
-			updateNetModification(&netModifications[vertical], &(sensor_values[sensorValueIdx]));
+			updateNetModification(&netModifications[vertical], &(simplifiedInstructions[sensorValueIdx]));
 			processed_frames += 1;
 			lastOperation = currentOperation;
 
 		}
 		else if (!strcmp(sensorKey, "A") || !strcmp(sensorKey, "D")) {
 			currentOperation = translation;
-
-			if(lastOperation != nooperation && currentOperation != lastOperation) {
-
-				//Perform rotation if any
-				if (netModifications[rotation].key != NULL) {
-
-					updateSparseMatrixParameters(rotation, netModifications[rotation].key, netModifications[rotation].value, width, height);
-
-					if (!strcmp(netModifications[rotation].key, "CW")) {
-						sparseMatrix = processRotateCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
-					}
-					else {
-						sparseMatrix = processRotateCCW(sparseMatrix, sparseMatrixParameters[8],sparseMatrixParameters[9],netModifications[rotation].value);
-					}
-
-					netModifications[rotation].key = NULL;
-					netModifications[rotation].value = 0;
-				}
-
-				//Perform mirrorx if any
-				if (netModifications[mirrorx].key != NULL) {
-					updateSparseMatrixParameters(mirror, netModifications[mirrorx].key, netModifications[mirrorx].value, width, height);
-					sparseMatrix = processMirrorX(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrorx].value);
-					netModifications[mirrorx].key = NULL;
-					netModifications[mirrorx].value = 0;
-				}
-
-				//Perform mirrory if any
-				if (netModifications[mirrory].key != NULL) {
-					updateSparseMatrixParameters(mirror, netModifications[mirrory].key, netModifications[mirrory].value, width, height);
-					sparseMatrix = processMirrorY(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrory].value);
-					netModifications[mirrory].key = NULL;
-					netModifications[mirrory].value = 0;
-					
-				}
-
-			}
-
-			updateNetModification(&netModifications[horizontal], &(sensor_values[sensorValueIdx]));
+			updateNetModification(&netModifications[horizontal], &(simplifiedInstructions[sensorValueIdx]));
 			processed_frames += 1;
 			lastOperation = currentOperation;
 
@@ -948,48 +1137,17 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 					netModifications[horizontal].value = 0;
 				}
 
-				//Perform mirrorx if any
-				if (netModifications[mirrorx].key != NULL) {
-					updateSparseMatrixParameters(mirror, netModifications[mirrorx].key, netModifications[mirrorx].value, width, height);
-					sparseMatrix = processMirrorX(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrorx].value);
-					netModifications[mirrorx].key = NULL;
-					netModifications[mirrorx].value = 0;
-					
-				}
-
-				//Perform mirrory if any
-				if (netModifications[mirrory].key != NULL) {
-					updateSparseMatrixParameters(mirror, netModifications[mirrory].key, netModifications[mirrory].value, width, height);
-					sparseMatrix = processMirrorY(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrory].value);
-					netModifications[mirrory].key = NULL;
-					netModifications[mirrory].value = 0;
-					
-				}
-
 			}
 
-			updateNetModification(&netModifications[rotation], &(sensor_values[sensorValueIdx]));
+			updateNetModification(&netModifications[rotation], &(simplifiedInstructions[sensorValueIdx]));
 			processed_frames += 1;
 			lastOperation = currentOperation;
 
 		}
-		else if (!strcmp(sensorKey, "MX") || !strcmp(sensorKey, "MY")) {
+		else if (!strcmp(sensorKey, "MX")) {
 			currentOperation = mirror;
 
 			if(lastOperation != nooperation && currentOperation != lastOperation) {
-
-				//Perform translation if any
-				if (netModifications[vertical].key != NULL) {
-					updateSparseMatrixParameters(translation, netModifications[vertical].key, netModifications[vertical].value, width, height);
-					netModifications[vertical].key = NULL;
-					netModifications[vertical].value = 0;
-				}
-			
-			        if (netModifications[horizontal].key != NULL) {
-					updateSparseMatrixParameters(translation, netModifications[horizontal].key, netModifications[horizontal].value, width, height);
-					netModifications[horizontal].key = NULL;
-					netModifications[horizontal].value = 0;
-				}
 
 				//Perform rotation if any
 				if (netModifications[rotation].key != NULL) {
@@ -1008,20 +1166,31 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 
 			}
 
-			if (!strcmp(sensorKey, "MX")) {
-				updateNetModification(&netModifications[mirrorx], &(sensor_values[sensorValueIdx]));
-				
-			}
-			else if (!strcmp(sensorKey, "MY")) {
-				updateNetModification(&netModifications[mirrory], &(sensor_values[sensorValueIdx]));
-			}
+			//updateNetModification(&netModifications[mirrorx], &(simplifiedInstructions[sensorValueIdx]));
+			processed_frames += numMX;
+			sensorValueIdx += numMX;
+			lastOperation = currentOperation;
+
+		}
+		else if (!strcmp(sensorKey, "MY")) {
 			
-			processed_frames += 1;
+			//Perform mirrorx if any
+			if (netModifications[mirrorx].key != NULL) {
+				updateSparseMatrixParameters(mirror, netModifications[mirrorx].key, netModifications[mirrorx].value, width, height);
+				sparseMatrix = processMirrorX(sparseMatrix, sparseMatrixParameters[8], sparseMatrixParameters[9], netModifications[mirrorx].value);
+				netModifications[mirrorx].key = NULL;
+				netModifications[mirrorx].value = 0;
+			}
+
+			//updateNetModification(&netModifications[mirrory], &(simplifiedInstructions[sensorValueIdx]));
+			processed_frames += numMY;
+			sensorValueIdx += numMY;
 			lastOperation = currentOperation;
 
 		}
 
 		if (processed_frames % 25 == 0) {
+			
 			//Perform translation if any
 			if (netModifications[vertical].key != NULL) {
 					updateSparseMatrixParameters(translation, netModifications[vertical].key, netModifications[vertical].value, width, height);
@@ -1083,7 +1252,7 @@ void implementation_driver(struct kv* sensor_values, int sensor_values_count, un
 		}
 
 	}
-
+}
 	deallocateFrame(rendered_frame);
 	deallocateFrame(sparseMatrix);
 

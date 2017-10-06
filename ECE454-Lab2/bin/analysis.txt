@@ -1,32 +1,34 @@
 Flat profile:
 
 Each sample counts as 0.01 seconds.
- no time accumulated
-
   %   cumulative   self              self     total           
- time   seconds   seconds    calls  Ts/call  Ts/call  name    
-  0.00      0.00     0.00       63     0.00     0.00  copyFrame
-  0.00      0.00     0.00       53     0.00     0.00  allocateFrame
-  0.00      0.00     0.00       51     0.00     0.00  deallocateFrame
-  0.00      0.00     0.00       10     0.00     0.00  processMoveDownReference
-  0.00      0.00     0.00       10     0.00     0.00  processMoveLeftReference
-  0.00      0.00     0.00       10     0.00     0.00  processMoveRightReference
-  0.00      0.00     0.00       10     0.00     0.00  processMoveUpReference
-  0.00      0.00     0.00        5     0.00     0.00  processMirrorX
-  0.00      0.00     0.00        5     0.00     0.00  processMirrorXReference
-  0.00      0.00     0.00        5     0.00     0.00  processMirrorY
-  0.00      0.00     0.00        5     0.00     0.00  processMirrorYReference
-  0.00      0.00     0.00        5     0.00     0.00  processMoveDown
-  0.00      0.00     0.00        5     0.00     0.00  processMoveLeft
-  0.00      0.00     0.00        5     0.00     0.00  processMoveRight
-  0.00      0.00     0.00        5     0.00     0.00  processMoveUp
-  0.00      0.00     0.00        1     0.00     0.00  implementation_driver
-  0.00      0.00     0.00        1     0.00     0.00  implementation_driver_reference
-  0.00      0.00     0.00        1     0.00     0.00  loadbmp_decode_file
-  0.00      0.00     0.00        1     0.00     0.00  print_team_info
-  0.00      0.00     0.00        1     0.00     0.00  recordFrame
-  0.00      0.00     0.00        1     0.00     0.00  verifiedAllFrames
-  0.00      0.00     0.00        1     0.00     0.00  verifyFrame
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 51.30      4.78     4.78      172     0.03     0.05  processRotateCWReference
+ 41.75      8.67     3.89      547     0.01     0.01  copyFrame
+  1.50      8.81     0.14       25     0.01     0.01  processMoveLeftReference
+  1.50      8.95     0.14       18     0.01     0.01  processMoveUpReference
+  1.29      9.07     0.12       23     0.01     0.01  processMoveRightReference
+  1.18      9.18     0.11       11     0.01     0.02  processMirrorXReference
+  0.64      9.24     0.06       18     0.00     0.01  processMoveDownReference
+  0.54      9.29     0.05        7     0.01     0.01  processMirrorYReference
+  0.21      9.31     0.02        1     0.02     0.02  loadbmp_decode_file
+  0.11      9.32     0.01        1     0.01     0.01  findSparseMatrix
+  0.00      9.32     0.00      250     0.00     0.00  allocateFrame
+  0.00      9.32     0.00      245     0.00     0.00  deallocateFrame
+  0.00      9.32     0.00      100     0.00     0.00  updateNetModification
+  0.00      9.32     0.00       18     0.00     0.00  processRotateCCWReference
+  0.00      9.32     0.00       12     0.00     0.00  updateSparseMatrixParameters
+  0.00      9.32     0.00        4     0.00     0.00  drawSparseMatrixInImage
+  0.00      9.32     0.00        4     0.00     0.00  processRotateCW
+  0.00      9.32     0.00        4     0.00     0.01  recordFrame
+  0.00      9.32     0.00        4     0.00     0.00  updateSimplifiedInstructionsArray
+  0.00      9.32     0.00        4     0.00     0.00  verifyFrame
+  0.00      9.32     0.00        1     0.00     0.01  implementation_driver
+  0.00      9.32     0.00        1     0.00     9.28  implementation_driver_reference
+  0.00      9.32     0.00        1     0.00     0.00  print_team_info
+  0.00      9.32     0.00        1     0.00     0.00  processMirrorX
+  0.00      9.32     0.00        1     0.00     0.00  processMirrorY
+  0.00      9.32     0.00        1     0.00     0.00  verifiedAllFrames
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -64,143 +66,183 @@ notice and this notice are preserved.
 		     Call graph (explanation follows)
 
 
-granularity: each sample hit covers 2 byte(s) no time propagated
+granularity: each sample hit covers 2 byte(s) for 0.11% of 9.32 seconds
 
 index % time    self  children    called     name
-                0.00    0.00       1/63          recordFrame [20]
-                0.00    0.00       2/63          main [41]
-                0.00    0.00       5/63          processMirrorXReference [9]
-                0.00    0.00       5/63          processMirrorYReference [11]
-                0.00    0.00       5/63          processMirrorX [8]
-                0.00    0.00       5/63          processMirrorY [10]
-                0.00    0.00      10/63          processMoveUpReference [7]
-                0.00    0.00      10/63          processMoveLeftReference [5]
-                0.00    0.00      10/63          processMoveDownReference [4]
-                0.00    0.00      10/63          processMoveRightReference [6]
-[1]      0.0    0.00    0.00      63         copyFrame [1]
+                                                 <spontaneous>
+[1]    100.0    0.00    9.32                 main [1]
+                0.00    9.28       1/1           implementation_driver_reference [2]
+                0.02    0.00       1/1           loadbmp_decode_file [14]
+                0.01    0.00       2/547         copyFrame [5]
+                0.00    0.01       1/1           implementation_driver [16]
+                0.00    0.00       1/1           print_team_info [26]
+                0.00    0.00       1/250         allocateFrame [17]
+                0.00    0.00       1/1           verifiedAllFrames [29]
 -----------------------------------------------
-                0.00    0.00       1/53          main [41]
-                0.00    0.00       1/53          recordFrame [20]
-                0.00    0.00       1/53          implementation_driver [16]
-                0.00    0.00       5/53          processMirrorXReference [9]
-                0.00    0.00       5/53          processMirrorYReference [11]
-                0.00    0.00      10/53          processMoveUpReference [7]
-                0.00    0.00      10/53          processMoveLeftReference [5]
-                0.00    0.00      10/53          processMoveDownReference [4]
-                0.00    0.00      10/53          processMoveRightReference [6]
-[2]      0.0    0.00    0.00      53         allocateFrame [2]
+                0.00    9.28       1/1           main [1]
+[2]     99.5    0.00    9.28       1         implementation_driver_reference [2]
+                2.59    1.79      13/24          processRotateCCWReference <cycle 2> [20]
+                2.19    1.52      11/24          processRotateCWReference <cycle 2> [4]
+                0.14    0.12      17/31          processMoveLeftReference <cycle 1> [9]
+                0.06    0.20      18/18          processMoveDownReference [8]
+                0.12    0.10      14/31          processMoveRightReference <cycle 1> [10]
+                0.11    0.08      11/11          processMirrorXReference [11]
+                0.07    0.06       9/18          processMoveUpReference [7]
+                0.05    0.05       7/7           processMirrorYReference [12]
+                0.00    0.03       4/4           recordFrame [13]
 -----------------------------------------------
-                0.00    0.00       1/51          implementation_driver [16]
-                0.00    0.00       5/51          processMirrorXReference [9]
-                0.00    0.00       5/51          processMirrorYReference [11]
-                0.00    0.00      10/51          processMoveUpReference [7]
-                0.00    0.00      10/51          processMoveLeftReference [5]
-                0.00    0.00      10/51          processMoveDownReference [4]
-                0.00    0.00      10/51          processMoveRightReference [6]
-[3]      0.0    0.00    0.00      51         deallocateFrame [3]
+[3]     86.8    4.78    3.31      24+166     <cycle 2 as a whole> [3]
+                4.78    3.31     172             processRotateCWReference <cycle 2> [4]
+                0.00    0.00      18             processRotateCCWReference <cycle 2> [20]
 -----------------------------------------------
-                0.00    0.00       5/10          implementation_driver_reference [17]
-                0.00    0.00       5/10          processMoveDown [12]
-[4]      0.0    0.00    0.00      10         processMoveDownReference [4]
-                0.00    0.00      10/53          allocateFrame [2]
-                0.00    0.00      10/63          copyFrame [1]
-                0.00    0.00      10/51          deallocateFrame [3]
+                                 161             processRotateCCWReference <cycle 2> [20]
+                2.19    1.52      11/24          implementation_driver_reference [2]
+[4]     86.8    4.78    3.31     172         processRotateCWReference <cycle 2> [4]
+                3.31    0.00     465/547         copyFrame [5]
+                0.00    0.00     167/250         allocateFrame [17]
+                0.00    0.00     167/245         deallocateFrame [18]
+                                   5             processRotateCCWReference <cycle 2> [20]
 -----------------------------------------------
-                0.00    0.00       5/10          implementation_driver_reference [17]
-                0.00    0.00       5/10          processMoveLeft [13]
-[5]      0.0    0.00    0.00      10         processMoveLeftReference [5]
-                0.00    0.00      10/53          allocateFrame [2]
-                0.00    0.00      10/63          copyFrame [1]
-                0.00    0.00      10/51          deallocateFrame [3]
+                0.01    0.00       2/547         main [1]
+                0.03    0.00       4/547         recordFrame [13]
+                0.05    0.00       7/547         processMirrorYReference [12]
+                0.06    0.00       9/547         processMoveDownReference [8]
+                0.08    0.00      11/547         processMirrorXReference [11]
+                0.11    0.00      15/547         processMoveRightReference <cycle 1> [10]
+                0.11    0.00      16/547         processMoveLeftReference <cycle 1> [9]
+                0.13    0.00      18/547         processMoveUpReference [7]
+                3.31    0.00     465/547         processRotateCWReference <cycle 2> [4]
+[5]     41.7    3.89    0.00     547         copyFrame [5]
 -----------------------------------------------
-                0.00    0.00       5/10          implementation_driver_reference [17]
-                0.00    0.00       5/10          processMoveRight [14]
-[6]      0.0    0.00    0.00      10         processMoveRightReference [6]
-                0.00    0.00      10/53          allocateFrame [2]
-                0.00    0.00      10/63          copyFrame [1]
-                0.00    0.00      10/51          deallocateFrame [3]
+[6]      5.2    0.26    0.22      31+17      <cycle 1 as a whole> [6]
+                0.14    0.11      25             processMoveLeftReference <cycle 1> [9]
+                0.12    0.11      23             processMoveRightReference <cycle 1> [10]
 -----------------------------------------------
-                0.00    0.00       5/10          implementation_driver_reference [17]
-                0.00    0.00       5/10          processMoveUp [15]
-[7]      0.0    0.00    0.00      10         processMoveUpReference [7]
-                0.00    0.00      10/53          allocateFrame [2]
-                0.00    0.00      10/63          copyFrame [1]
-                0.00    0.00      10/51          deallocateFrame [3]
+                0.07    0.06       9/18          processMoveDownReference [8]
+                0.07    0.06       9/18          implementation_driver_reference [2]
+[7]      2.9    0.14    0.13      18         processMoveUpReference [7]
+                0.13    0.00      18/547         copyFrame [5]
+                0.00    0.00      18/250         allocateFrame [17]
+                0.00    0.00      18/245         deallocateFrame [18]
 -----------------------------------------------
-                0.00    0.00       5/5           implementation_driver [16]
-[8]      0.0    0.00    0.00       5         processMirrorX [8]
-                0.00    0.00       5/63          copyFrame [1]
+                0.06    0.20      18/18          implementation_driver_reference [2]
+[8]      2.8    0.06    0.20      18         processMoveDownReference [8]
+                0.07    0.06       9/18          processMoveUpReference [7]
+                0.06    0.00       9/547         copyFrame [5]
+                0.00    0.00       9/250         allocateFrame [17]
+                0.00    0.00       9/245         deallocateFrame [18]
 -----------------------------------------------
-                0.00    0.00       5/5           implementation_driver_reference [17]
-[9]      0.0    0.00    0.00       5         processMirrorXReference [9]
-                0.00    0.00       5/53          allocateFrame [2]
-                0.00    0.00       5/63          copyFrame [1]
-                0.00    0.00       5/51          deallocateFrame [3]
+                                   8             processMoveRightReference <cycle 1> [10]
+                0.14    0.12      17/31          implementation_driver_reference [2]
+[9]      2.7    0.14    0.11      25         processMoveLeftReference <cycle 1> [9]
+                0.11    0.00      16/547         copyFrame [5]
+                0.00    0.00      16/250         allocateFrame [17]
+                0.00    0.00      16/245         deallocateFrame [18]
+                                   9             processMoveRightReference <cycle 1> [10]
 -----------------------------------------------
-                0.00    0.00       5/5           implementation_driver [16]
-[10]     0.0    0.00    0.00       5         processMirrorY [10]
-                0.00    0.00       5/63          copyFrame [1]
+                                   9             processMoveLeftReference <cycle 1> [9]
+                0.12    0.10      14/31          implementation_driver_reference [2]
+[10]     2.4    0.12    0.11      23         processMoveRightReference <cycle 1> [10]
+                0.11    0.00      15/547         copyFrame [5]
+                0.00    0.00      15/250         allocateFrame [17]
+                0.00    0.00      15/245         deallocateFrame [18]
+                                   8             processMoveLeftReference <cycle 1> [9]
 -----------------------------------------------
-                0.00    0.00       5/5           implementation_driver_reference [17]
-[11]     0.0    0.00    0.00       5         processMirrorYReference [11]
-                0.00    0.00       5/53          allocateFrame [2]
-                0.00    0.00       5/63          copyFrame [1]
-                0.00    0.00       5/51          deallocateFrame [3]
+                0.11    0.08      11/11          implementation_driver_reference [2]
+[11]     2.0    0.11    0.08      11         processMirrorXReference [11]
+                0.08    0.00      11/547         copyFrame [5]
+                0.00    0.00      11/250         allocateFrame [17]
+                0.00    0.00      11/245         deallocateFrame [18]
 -----------------------------------------------
-                0.00    0.00       5/5           implementation_driver [16]
-[12]     0.0    0.00    0.00       5         processMoveDown [12]
-                0.00    0.00       5/10          processMoveDownReference [4]
+                0.05    0.05       7/7           implementation_driver_reference [2]
+[12]     1.1    0.05    0.05       7         processMirrorYReference [12]
+                0.05    0.00       7/547         copyFrame [5]
+                0.00    0.00       7/250         allocateFrame [17]
+                0.00    0.00       7/245         deallocateFrame [18]
 -----------------------------------------------
-                0.00    0.00       5/5           implementation_driver [16]
-[13]     0.0    0.00    0.00       5         processMoveLeft [13]
-                0.00    0.00       5/10          processMoveLeftReference [5]
+                0.00    0.03       4/4           implementation_driver_reference [2]
+[13]     0.3    0.00    0.03       4         recordFrame [13]
+                0.03    0.00       4/547         copyFrame [5]
+                0.00    0.00       4/250         allocateFrame [17]
 -----------------------------------------------
-                0.00    0.00       5/5           implementation_driver [16]
-[14]     0.0    0.00    0.00       5         processMoveRight [14]
-                0.00    0.00       5/10          processMoveRightReference [6]
+                0.02    0.00       1/1           main [1]
+[14]     0.2    0.02    0.00       1         loadbmp_decode_file [14]
 -----------------------------------------------
-                0.00    0.00       5/5           implementation_driver [16]
-[15]     0.0    0.00    0.00       5         processMoveUp [15]
-                0.00    0.00       5/10          processMoveUpReference [7]
+                0.01    0.00       1/1           implementation_driver [16]
+[15]     0.1    0.01    0.00       1         findSparseMatrix [15]
+                0.00    0.00       1/250         allocateFrame [17]
 -----------------------------------------------
-                0.00    0.00       1/1           main [41]
-[16]     0.0    0.00    0.00       1         implementation_driver [16]
-                0.00    0.00       5/5           processMoveUp [15]
-                0.00    0.00       5/5           processMoveLeft [13]
-                0.00    0.00       5/5           processMoveDown [12]
-                0.00    0.00       5/5           processMoveRight [14]
-                0.00    0.00       5/5           processMirrorX [8]
-                0.00    0.00       5/5           processMirrorY [10]
-                0.00    0.00       1/53          allocateFrame [2]
-                0.00    0.00       1/1           verifyFrame [22]
-                0.00    0.00       1/51          deallocateFrame [3]
+                0.00    0.01       1/1           main [1]
+[16]     0.1    0.00    0.01       1         implementation_driver [16]
+                0.01    0.00       1/1           findSparseMatrix [15]
+                0.00    0.00     100/100         updateNetModification [19]
+                0.00    0.00      12/12          updateSparseMatrixParameters [21]
+                0.00    0.00       4/4           updateSimplifiedInstructionsArray [24]
+                0.00    0.00       4/4           processRotateCW [23]
+                0.00    0.00       4/4           drawSparseMatrixInImage [22]
+                0.00    0.00       4/4           verifyFrame [25]
+                0.00    0.00       2/245         deallocateFrame [18]
+                0.00    0.00       1/250         allocateFrame [17]
+                0.00    0.00       1/1           processMirrorX [27]
+                0.00    0.00       1/1           processMirrorY [28]
 -----------------------------------------------
-                0.00    0.00       1/1           main [41]
-[17]     0.0    0.00    0.00       1         implementation_driver_reference [17]
-                0.00    0.00       5/10          processMoveRightReference [6]
-                0.00    0.00       5/10          processMoveLeftReference [5]
-                0.00    0.00       5/10          processMoveUpReference [7]
-                0.00    0.00       5/10          processMoveDownReference [4]
-                0.00    0.00       5/5           processMirrorXReference [9]
-                0.00    0.00       5/5           processMirrorYReference [11]
-                0.00    0.00       1/1           recordFrame [20]
+                0.00    0.00       1/250         main [1]
+                0.00    0.00       1/250         findSparseMatrix [15]
+                0.00    0.00       1/250         implementation_driver [16]
+                0.00    0.00       4/250         recordFrame [13]
+                0.00    0.00       7/250         processMirrorYReference [12]
+                0.00    0.00       9/250         processMoveDownReference [8]
+                0.00    0.00      11/250         processMirrorXReference [11]
+                0.00    0.00      15/250         processMoveRightReference <cycle 1> [10]
+                0.00    0.00      16/250         processMoveLeftReference <cycle 1> [9]
+                0.00    0.00      18/250         processMoveUpReference [7]
+                0.00    0.00     167/250         processRotateCWReference <cycle 2> [4]
+[17]     0.0    0.00    0.00     250         allocateFrame [17]
 -----------------------------------------------
-                0.00    0.00       1/1           main [41]
-[18]     0.0    0.00    0.00       1         loadbmp_decode_file [18]
+                0.00    0.00       2/245         implementation_driver [16]
+                0.00    0.00       7/245         processMirrorYReference [12]
+                0.00    0.00       9/245         processMoveDownReference [8]
+                0.00    0.00      11/245         processMirrorXReference [11]
+                0.00    0.00      15/245         processMoveRightReference <cycle 1> [10]
+                0.00    0.00      16/245         processMoveLeftReference <cycle 1> [9]
+                0.00    0.00      18/245         processMoveUpReference [7]
+                0.00    0.00     167/245         processRotateCWReference <cycle 2> [4]
+[18]     0.0    0.00    0.00     245         deallocateFrame [18]
 -----------------------------------------------
-                0.00    0.00       1/1           main [41]
-[19]     0.0    0.00    0.00       1         print_team_info [19]
+                0.00    0.00     100/100         implementation_driver [16]
+[19]     0.0    0.00    0.00     100         updateNetModification [19]
 -----------------------------------------------
-                0.00    0.00       1/1           implementation_driver_reference [17]
-[20]     0.0    0.00    0.00       1         recordFrame [20]
-                0.00    0.00       1/53          allocateFrame [2]
-                0.00    0.00       1/63          copyFrame [1]
+                                   5             processRotateCWReference <cycle 2> [4]
+                2.59    1.79      13/24          implementation_driver_reference [2]
+[20]     0.0    0.00    0.00      18         processRotateCCWReference <cycle 2> [20]
+                                 161             processRotateCWReference <cycle 2> [4]
 -----------------------------------------------
-                0.00    0.00       1/1           main [41]
-[21]     0.0    0.00    0.00       1         verifiedAllFrames [21]
+                0.00    0.00      12/12          implementation_driver [16]
+[21]     0.0    0.00    0.00      12         updateSparseMatrixParameters [21]
+-----------------------------------------------
+                0.00    0.00       4/4           implementation_driver [16]
+[22]     0.0    0.00    0.00       4         drawSparseMatrixInImage [22]
+-----------------------------------------------
+                0.00    0.00       4/4           implementation_driver [16]
+[23]     0.0    0.00    0.00       4         processRotateCW [23]
+-----------------------------------------------
+                0.00    0.00       4/4           implementation_driver [16]
+[24]     0.0    0.00    0.00       4         updateSimplifiedInstructionsArray [24]
+-----------------------------------------------
+                0.00    0.00       4/4           implementation_driver [16]
+[25]     0.0    0.00    0.00       4         verifyFrame [25]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[26]     0.0    0.00    0.00       1         print_team_info [26]
 -----------------------------------------------
                 0.00    0.00       1/1           implementation_driver [16]
-[22]     0.0    0.00    0.00       1         verifyFrame [22]
+[27]     0.0    0.00    0.00       1         processMirrorX [27]
+-----------------------------------------------
+                0.00    0.00       1/1           implementation_driver [16]
+[28]     0.0    0.00    0.00       1         processMirrorY [28]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[29]     0.0    0.00    0.00       1         verifiedAllFrames [29]
 -----------------------------------------------
 
  This table describes the call tree of the program, and was sorted by
@@ -293,11 +335,13 @@ notice and this notice are preserved.
 
 Index by function name
 
-   [2] allocateFrame           [9] processMirrorXReference [6] processMoveRightReference
-   [1] copyFrame              [10] processMirrorY         [15] processMoveUp
-   [3] deallocateFrame        [11] processMirrorYReference [7] processMoveUpReference
-  [16] implementation_driver  [12] processMoveDown        [20] recordFrame
-  [17] implementation_driver_reference [4] processMoveDownReference [21] verifiedAllFrames
-  [18] loadbmp_decode_file    [13] processMoveLeft        [22] verifyFrame
-  [19] print_team_info         [5] processMoveLeftReference
-   [8] processMirrorX         [14] processMoveRight
+  [17] allocateFrame          [11] processMirrorXReference [13] recordFrame
+   [5] copyFrame              [28] processMirrorY         [19] updateNetModification
+  [18] deallocateFrame        [12] processMirrorYReference [24] updateSimplifiedInstructionsArray
+  [22] drawSparseMatrixInImage [8] processMoveDownReference [21] updateSparseMatrixParameters
+  [15] findSparseMatrix        [9] processMoveLeftReference [29] verifiedAllFrames
+  [16] implementation_driver  [10] processMoveRightReference [25] verifyFrame
+   [2] implementation_driver_reference [7] processMoveUpReference [6] <cycle 1>
+  [14] loadbmp_decode_file    [20] processRotateCCWReference [3] <cycle 2>
+  [26] print_team_info        [23] processRotateCW
+  [27] processMirrorX          [4] processRotateCWReference
